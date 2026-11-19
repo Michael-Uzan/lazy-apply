@@ -402,12 +402,96 @@ cannot flip the outcome, because the outcome is arithmetic over ten calls
 rather than an eleventh opinion. Had the model been asked for the verdict
 directly, there would be nothing to say about this.
 
-## Measured results
+## Measuring it: `lazyapply eval`
 
-`lazyapply eval` scores the system against `core/evals/golden.yaml` — 21
-requirements across both example postings, labelled by hand. Two labels per
-requirement: which evidence blocks *should* be retrieved, and what status a
-person would give. The labels are the only thing here that is not derived.
+A unit test asks *is this right?* An eval asks *how right?* — because
+retrieval is never exactly right. It returns three blocks, some useful, and
+you need a number for how useful.
+
+That number needs something to compare against: `core/evals/golden.yaml`,
+21 requirements labelled by hand. It is the only file here that is not
+derived from something else.
+
+```yaml
+- id: react_production
+  relevant: [ev_northwind__real-time-trading-dashboard]   # what SHOULD be found
+  status: strong                                          # what a person answers
+  note: the only React block in the collection
+```
+
+Both labels were written by reading the six evidence blocks — **before**
+running the system. The other order scores the system against itself and
+always says 1.000.
+
+```
+golden.yaml                      the system
+  relevant: [dashboard]   ←──?──→  retrieved: dashboard, graphql, etl
+  status:   strong        ←──?──→  Haiku said: strong
+      │                                 │
+      └───── recall@k, MRR ─────────────┘   did retrieval find it, and how high?
+      └───── agreement ─────────────────┘   did the model judge it like a person?
+```
+
+### `relevant: []` is a label, not a blank
+
+All ten firmware requirements carry it. No block in the collection is
+relevant to any of them.
+
+This matters because **retrieval always returns something** — ask Qdrant for
+firmware evidence and it hands back the three least-irrelevant blocks it
+owns. Scoring those as misses would read as recall 11/21 and blame retrieval
+for a question nobody asked it.
+
+| Requirements | Measured by | Question |
+|---|---|---|
+| 11 with a correct answer | recall@k, MRR | did it find the right block? |
+| 10 with none | agreement | did it correctly say there isn't one? |
+
+### What each number asks
+
+| | Question | Blind to |
+|---|---|---|
+| **recall@k** | Is the right block in the top k? | where in the top k |
+| **MRR** | How far down is the first right block? | the second right block |
+| **agreement** | Did the model judge like a person? | nothing — it has direction |
+
+Recall and MRR look alike until you see where they split:
+
+```
+retrieved: [right, wrong, wrong]     recall@3 = 1.00    MRR = 1.00
+retrieved: [wrong, wrong, right]     recall@3 = 1.00    MRR = 0.33
+```
+
+Recall says *it's in the pile*. MRR says *it's on top*.
+
+Worked example — `fintech_domain`, where two blocks are labelled relevant:
+
+```
+relevant   = {dashboard, order-pipeline}
+retrieved  = [dashboard, graphql, python-etl]   (top 3)
+
+recall@3   = 1 of 2 found            → 0.50
+MRR        = right block at rank 1   → 1.00
+```
+
+Agreement is reported with **direction**, because the two errors are not
+equally bad:
+
+| Direction | Model said | A person said | Cost |
+|---|---|---|---|
+| generous | strong | none | credibility — you walk into an interview you cannot defend, and you cannot tell from the report |
+| harsh | none | partial | an application you probably would not have won |
+
+### Two guards worth knowing about
+
+**An undefined metric prints `—`, never `0.000`.** Those are different
+claims: one says the system failed, the other says nothing was measured.
+
+**Stale labels are an error, not a skip.** Reword a posting and its hash
+changes, Opus re-extracts, and a requirement can come back renamed. If `eval`
+quietly dropped labels that no longer match, the measured set would shrink
+from 21 to 12 — and recall would go **up**, because the dropped ones are the
+hard ones. An eval that improves when its labels rot is worse than no eval.
 
 ```
 $ lazyapply eval --sweep
@@ -423,10 +507,7 @@ $ lazyapply eval --sweep
 | 4 | 1.000 | 1.000 |
 | 5 | 1.000 | 1.000 |
 
-Scored over the 11 requirements that have a correct answer. The firmware
-posting's 10 are **excluded, not failed** — no block in the collection is
-relevant to any of them, so recall is undefined. Counting them as misses
-would blame retrieval for questions it was never asked.
+Over the 11 requirements with a correct answer.
 
 **MRR is 1.000 at every cutoff**, which is the more interesting number: the
 first relevant block is always ranked first. Recall climbs with k only
