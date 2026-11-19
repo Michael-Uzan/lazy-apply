@@ -15,14 +15,28 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from lazyapply_core.embed.base import Embedder, Vector
+from lazyapply_core.embed.tokens import estimate_tokens
 from lazyapply_core.hashing import content_hash
+from lazyapply_core.telemetry.base import NullTelemetry, Telemetry, Usage
+from lazyapply_core.telemetry.providers import VOYAGE
 
 
 class CachedEmbedder:
     """Embedder decorator that stores document vectors on disk."""
 
-    def __init__(self, inner: Embedder, *, cache_dir: Path) -> None:
+    def __init__(
+        self,
+        inner: Embedder,
+        *,
+        cache_dir: Path,
+        telemetry: Telemetry | None = None,
+        command: str = "embed",
+        run: str = "",
+    ) -> None:
         self._inner = inner
+        self._telemetry = telemetry or NullTelemetry()
+        self._command = command
+        self._run = run
         # Model and dimensions are part of the path, not just the filename.
         # Two models can return equal-length vectors that mean different
         # things, and serving one for the other produces silently wrong
@@ -39,6 +53,8 @@ class CachedEmbedder:
 
     def embed_documents(self, texts: Sequence[str]) -> tuple[Vector, ...]:
         missing = self.missing(texts)
+        self._record_hits(texts, missing)
+
         if missing:
             fresh = self._inner.embed_documents(missing)
             for text, vector in zip(missing, fresh, strict=True):
@@ -53,6 +69,30 @@ class CachedEmbedder:
 
     def embed_queries(self, texts: Sequence[str]) -> tuple[Vector, ...]:
         return self._inner.embed_queries(texts)
+
+    def _record_hits(self, texts: Sequence[str], missing: Sequence[str]) -> None:
+        """Log the requests the cache avoided.
+
+        Recorded rather than ignored, and priced at what they would have cost:
+        the usage log is the only place the cache's value is visible, and a
+        report of money spent says nothing about money not spent.
+        """
+        served = [text for text in texts if text not in set(missing)]
+        if not served:
+            return
+
+        self._telemetry.record(
+            Usage(
+                command=self._command,
+                provider=VOYAGE,
+                model=self.model,
+                input_tokens=estimate_tokens(served),
+                output_tokens=0,
+                latency_ms=0,
+                run=self._run,
+                cached=True,
+            )
+        )
 
     def missing(self, texts: Sequence[str]) -> list[str]:
         """Texts with no stored vector, deduplicated, in first-seen order.

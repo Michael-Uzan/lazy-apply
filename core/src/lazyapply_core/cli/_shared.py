@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 
 from lazyapply_core.config import Settings, load_settings
+from lazyapply_core.telemetry import Run
 
 DataDir = Annotated[
     Path | None,
@@ -40,25 +41,29 @@ InMemory = Annotated[
 ]
 
 
-_ROLE_CACHE_SUBDIR = "roles"
+NoTelemetry = Annotated[
+    bool,
+    typer.Option("--no-telemetry", help="Do not record this run in the usage log."),
+]
 
 
-def settings_for(data_dir: Path | None) -> Settings:
-    return load_settings(data_dir)
+def run_for(command: str, settings: Settings, *, no_telemetry: bool = False) -> Run:
+    """Telemetry context for one command invocation.
 
-
-def cache_root(settings: Settings, cache_dir: Path | None) -> Path:
-    """The cache directory, honouring ``--cache-dir``."""
-    return cache_dir or settings.cache_dir
-
-
-def role_cache(settings: Settings, cache_dir: Path | None) -> Path:
-    """Where cached requirement extractions live.
-
-    Three commands need this path and all three must agree: a mismatch would
-    silently pay Opus again for a posting already extracted.
+    One id per invocation, shared by every provider call it makes -- that is
+    what lets `lazyapply cost` report what a command costs rather than what a
+    single API call costs.
     """
-    return cache_root(settings, cache_dir) / _ROLE_CACHE_SUBDIR
+    return Run.for_command(command, settings, enabled=not no_telemetry)
+
+
+def settings_for(data_dir: Path | None, cache_dir: Path | None = None) -> Settings:
+    """Resolve both path overrides onto settings, once per command.
+
+    After this, ``settings.cache_dir`` is authoritative -- nothing downstream
+    takes a separate cache path.
+    """
+    return load_settings(data_dir, cache_dir)
 
 
 def abort(message: str) -> typer.Exit:

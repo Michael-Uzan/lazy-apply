@@ -9,6 +9,7 @@ a raw posting.
 
 from __future__ import annotations
 
+from time import perf_counter
 from typing import Any
 
 from lazyapply_core.domain import EvidencePack, Profile
@@ -16,6 +17,8 @@ from lazyapply_core.evaluate.base import EvaluationError
 from lazyapply_core.evaluate.prompts import MATCHING_SYSTEM, MATCHING_USER
 from lazyapply_core.evaluate.render import render_facts, render_pack
 from lazyapply_core.evaluate.schema import Judgment
+from lazyapply_core.telemetry.base import NullTelemetry, Telemetry
+from lazyapply_core.telemetry.providers import record_anthropic
 
 DEFAULT_MODEL = "claude-haiku-4-5"
 
@@ -32,6 +35,9 @@ class ClaudeEvaluator:
         api_key: str | None = None,
         model: str = DEFAULT_MODEL,
         client: Any | None = None,
+        telemetry: Telemetry | None = None,
+        command: str = "matching",
+        run: str = "",
     ) -> None:
         """
         Args:
@@ -40,10 +46,14 @@ class ClaudeEvaluator:
         """
         self._model = model
         self._client = client if client is not None else _build_client(api_key)
+        self._telemetry = telemetry or NullTelemetry()
+        self._command = command
+        self._run = run
 
     def judge(self, pack: EvidencePack, profile: Profile) -> Judgment:
         prompt = MATCHING_USER.format(facts=render_facts(profile), pack=render_pack(pack))
 
+        started = perf_counter()
         try:
             response = self._client.messages.parse(
                 model=self._model,
@@ -54,6 +64,15 @@ class ClaudeEvaluator:
             )
         except Exception as exc:
             raise EvaluationError(f"{self._model}: {exc}") from exc
+
+        record_anthropic(
+            self._telemetry,
+            response,
+            command=self._command,
+            run=self._run,
+            model=self._model,
+            started=started,
+        )
 
         parsed = response.parsed_output
         if not isinstance(parsed, Judgment):

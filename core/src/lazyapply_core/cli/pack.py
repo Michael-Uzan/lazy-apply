@@ -17,9 +17,9 @@ from lazyapply_core.cli._shared import (
     DataDir,
     Fake,
     InMemory,
+    NoTelemetry,
     abort,
-    cache_root,
-    role_cache,
+    run_for,
     settings_for,
 )
 from lazyapply_core.domain import EvidencePack
@@ -42,24 +42,25 @@ def pack(
     cache_dir: CacheDir = None,
     fake: Fake = False,
     in_memory: InMemory = False,
+    no_telemetry: NoTelemetry = False,
 ) -> None:
     """Retrieve candidate evidence for every requirement in a posting."""
-    settings = settings_for(data_dir)
-    cache = cache_root(settings, cache_dir)
+    settings = settings_for(data_dir, cache_dir)
+    run = run_for("pack", settings, no_telemetry=no_telemetry)
 
     if not role_file.is_file():
         raise abort(f"role file not found: {role_file}")
 
     try:
-        embedder = build_embedder(settings, fake=fake, cache_dir=cache)
+        embedder = build_embedder(settings, fake=fake, run=run)
         store = build_store(settings, in_memory=in_memory)
         if in_memory and store.count() == 0:
             run_ingest(settings, embedder=embedder, store=store)
 
         role = extract_role(
             role_file.read_text(),
-            extractor=build_extractor(settings, fake=fake),
-            cache_dir=role_cache(settings, cache_dir),
+            extractor=build_extractor(settings, fake=fake, run=run),
+            cache_dir=settings.roles_cache,
         )
         evidence_pack = build_pack(role, embedder=embedder, store=store, top_k=top_k)
     except (ParseError, ExtractionError, EmbeddingError, ValueError) as exc:

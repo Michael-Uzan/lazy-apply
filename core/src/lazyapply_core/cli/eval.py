@@ -23,9 +23,9 @@ from lazyapply_core.cli._shared import (
     DataDir,
     Fake,
     InMemory,
+    NoTelemetry,
     abort,
-    cache_root,
-    role_cache,
+    run_for,
     settings_for,
 )
 from lazyapply_core.config import Settings
@@ -49,6 +49,7 @@ from lazyapply_core.ingest.profile import load_profile, profile_version
 from lazyapply_core.retrieve import ExtractionError, build_extractor, extract_role
 from lazyapply_core.retrieve.retriever import build_pack
 from lazyapply_core.store import build_store
+from lazyapply_core.telemetry import Run
 
 _MAX_SWEEP_K = 5
 """Widest cutoff a sweep reports. Beyond this the prompt carries more
@@ -77,9 +78,11 @@ def eval_(
     cache_dir: CacheDir = None,
     fake: Fake = False,
     in_memory: InMemory = False,
+    no_telemetry: NoTelemetry = False,
 ) -> None:
     """Score retrieval and judgment against the hand-labelled golden set."""
-    settings = settings_for(data_dir)
+    settings = settings_for(data_dir, cache_dir)
+    run = run_for("eval", settings, no_telemetry=no_telemetry)
 
     try:
         golden_set = load_golden(golden or DEFAULT_GOLDEN_PATH)
@@ -90,11 +93,11 @@ def eval_(
         retrieval, matching, margins = _measure(
             golden_set.cases,
             settings,
-            cache_dir=cache_dir,
             cutoffs=cutoffs,
             retrieval_only=retrieval_only,
             fake=fake,
             in_memory=in_memory,
+            run=run,
         )
     except LabelDriftError as exc:
         raise abort(f"{exc}{_drift_hint(fake)}") from exc
@@ -132,14 +135,13 @@ def _measure(
     cases: tuple[GoldenCase, ...],
     settings: Settings,
     *,
-    cache_dir: Path | None,
     cutoffs: tuple[int, ...],
     retrieval_only: bool,
     fake: bool,
     in_memory: bool,
+    run: Run,
 ) -> tuple[list[RetrievalScore], list[MatchingScore], list[ThresholdMargin]]:
-    cache = cache_root(settings, cache_dir)
-    embedder = build_embedder(settings, fake=fake, cache_dir=cache)
+    embedder = build_embedder(settings, fake=fake, run=run)
     store = build_store(settings, in_memory=in_memory)
     if in_memory and store.count() == 0:
         run_ingest(settings, embedder=embedder, store=store)
@@ -155,15 +157,15 @@ def _measure(
     for case in cases:
         role = extract_role(
             (settings.roles_dir / case.role).read_text(),
-            extractor=build_extractor(settings, fake=fake),
-            cache_dir=role_cache(settings, cache_dir),
+            extractor=build_extractor(settings, fake=fake, run=run),
+            cache_dir=settings.roles_cache,
         )
         pack = build_pack(role, embedder=embedder, store=store, top_k=max(cutoffs))
         retrieval += [score_retrieval(case, pack, k=k) for k in cutoffs]
         margins.append(score_thresholds(case, role, settings.thresholds))
 
         if profile is not None:
-            matching.append(_judge(case, role, pack, profile, settings, fake=fake))
+            matching.append(_judge(case, role, pack, profile, settings, fake=fake, run=run))
 
     return retrieval, matching, margins
 
@@ -176,12 +178,13 @@ def _judge(
     settings: Settings,
     *,
     fake: bool,
+    run: Run,
 ) -> MatchingScore:
     report = evaluate_fit(
         role,
         pack,
         profile,
-        evaluator=build_evaluator(settings, fake=fake),
+        evaluator=build_evaluator(settings, fake=fake, run=run),
         thresholds=settings.thresholds,
         profile_version=profile_version(profile),
     )

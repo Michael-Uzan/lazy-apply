@@ -16,8 +16,9 @@ from lazyapply_core.cli._shared import (
     CacheDir,
     DataDir,
     Fake,
+    NoTelemetry,
     abort,
-    role_cache,
+    run_for,
     settings_for,
 )
 from lazyapply_core.domain import RequirementKind, Role
@@ -31,9 +32,11 @@ def requirements(
     data_dir: DataDir = None,
     cache_dir: CacheDir = None,
     fake: Fake = False,
+    no_telemetry: NoTelemetry = False,
 ) -> None:
     """Extract and print the requirements for a job posting."""
-    settings = settings_for(data_dir)
+    settings = settings_for(data_dir, cache_dir)
+    run = run_for("requirements", settings, no_telemetry=no_telemetry)
 
     if not role_file.is_file():
         raise abort(f"role file not found: {role_file}")
@@ -41,8 +44,8 @@ def requirements(
     try:
         role = extract_role(
             role_file.read_text(),
-            extractor=build_extractor(settings, fake=fake),
-            cache_dir=role_cache(settings, cache_dir),
+            extractor=build_extractor(settings, fake=fake, run=run),
+            cache_dir=settings.roles_cache,
         )
     except ExtractionError as exc:
         raise abort(str(exc)) from exc

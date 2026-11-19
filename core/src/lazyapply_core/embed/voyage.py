@@ -8,9 +8,12 @@ different provider touches one file and one line of wiring.
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
+from time import perf_counter
 from typing import Any
 
 from lazyapply_core.embed.base import EmbeddingError, Vector
+from lazyapply_core.telemetry.base import NullTelemetry, Telemetry
+from lazyapply_core.telemetry.providers import record_voyage
 
 DEFAULT_MODEL = "voyage-3-lite"
 DEFAULT_DIMENSIONS = 512
@@ -42,6 +45,9 @@ class VoyageEmbedder:
         dimensions: int = DEFAULT_DIMENSIONS,
         batch_size: int = DEFAULT_BATCH_SIZE,
         client: Any | None = None,
+        telemetry: Telemetry | None = None,
+        command: str = "embed",
+        run: str = "",
     ) -> None:
         """
         Args:
@@ -53,6 +59,9 @@ class VoyageEmbedder:
         self._dimensions = dimensions
         self._batch_size = batch_size
         self._client = client if client is not None else _build_client(api_key)
+        self._telemetry = telemetry or NullTelemetry()
+        self._command = command
+        self._run = run
 
     @property
     def model(self) -> str:
@@ -81,10 +90,20 @@ class VoyageEmbedder:
         if not texts:
             return ()
 
+        started = perf_counter()
         try:
             response = self._client.embed(list(texts), model=self._model, input_type=input_type)
         except Exception as exc:
             raise EmbeddingError(f"{self._model}: {exc}") from exc
+
+        record_voyage(
+            self._telemetry,
+            response,
+            command=self._command,
+            run=self._run,
+            model=self._model,
+            started=started,
+        )
 
         vectors = tuple(tuple(float(v) for v in e) for e in response.embeddings)
 

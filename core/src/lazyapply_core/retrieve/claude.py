@@ -7,11 +7,14 @@ parsed and hoped over.
 
 from __future__ import annotations
 
+from time import perf_counter
 from typing import Any
 
 from lazyapply_core.retrieve.base import ExtractionError
 from lazyapply_core.retrieve.prompts import EXTRACTION_SYSTEM, EXTRACTION_USER
 from lazyapply_core.retrieve.schema import ExtractedRole
+from lazyapply_core.telemetry.base import NullTelemetry, Telemetry
+from lazyapply_core.telemetry.providers import record_anthropic
 
 DEFAULT_MODEL = "claude-opus-5"
 
@@ -28,6 +31,9 @@ class ClaudeExtractor:
         api_key: str | None = None,
         model: str = DEFAULT_MODEL,
         client: Any | None = None,
+        telemetry: Telemetry | None = None,
+        command: str = "extraction",
+        run: str = "",
     ) -> None:
         """
         Args:
@@ -36,8 +42,12 @@ class ClaudeExtractor:
         """
         self._model = model
         self._client = client if client is not None else _build_client(api_key)
+        self._telemetry = telemetry or NullTelemetry()
+        self._command = command
+        self._run = run
 
     def extract(self, role_text: str) -> ExtractedRole:
+        started = perf_counter()
         try:
             response = self._client.messages.parse(
                 model=self._model,
@@ -48,6 +58,15 @@ class ClaudeExtractor:
             )
         except Exception as exc:
             raise ExtractionError(f"{self._model}: {exc}") from exc
+
+        record_anthropic(
+            self._telemetry,
+            response,
+            command=self._command,
+            run=self._run,
+            model=self._model,
+            started=started,
+        )
 
         parsed = response.parsed_output
         if not isinstance(parsed, ExtractedRole):

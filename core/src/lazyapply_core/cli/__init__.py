@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import typer
 
+from lazyapply_core.cli import cost as cost_cmd
 from lazyapply_core.cli import embed as embed_cmd
 from lazyapply_core.cli import eval as eval_cmd
 from lazyapply_core.cli import evidence, profile
@@ -32,5 +33,6 @@ app.command("requirements")(requirements_cmd.requirements)
 app.command("pack")(pack_cmd.pack)
 app.command("fit")(fit_cmd.fit)
 app.command("eval")(eval_cmd.eval_)
+app.command("cost")(cost_cmd.cost)
 
 __all__ = ["app"]

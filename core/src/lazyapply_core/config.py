@@ -70,6 +70,18 @@ class Settings(BaseSettings):
     thresholds: Thresholds = Thresholds()
 
     @property
+    def roles_cache(self) -> Path:
+        """Cached requirement extractions. Three commands read this and all
+        three must agree, or one silently pays Opus again."""
+        return self.cache_dir / "roles"
+
+    @property
+    def usage_log(self) -> Path:
+        """Append-only JSONL of every provider call. Lives beside the caches
+        because it is derived data: deleting it loses history, nothing else."""
+        return self.cache_dir / "usage.jsonl"
+
+    @property
     def evidence_dir(self) -> Path:
         return self.data_dir / "evidence"
 
@@ -82,13 +94,23 @@ class Settings(BaseSettings):
         return self.data_dir / "roles"
 
 
-def load_settings(data_dir: Path | None = None) -> Settings:
-    """Build settings, optionally pointing at a different data directory.
+def load_settings(data_dir: Path | None = None, cache_dir: Path | None = None) -> Settings:
+    """Build settings, optionally relocating the data and cache directories.
 
-    The override exists so the README quickstart can run against
-    ``data/example/`` without anyone editing a config file.
+    The overrides exist so the README quickstart can run against
+    ``data/example/`` without editing a config file, and so a test can point
+    every derived artefact somewhere disposable.
+
+    They are applied here rather than threaded alongside ``settings`` through
+    each command, so that ``settings.cache_dir`` is the single answer to
+    "where does derived data go". It was not, once: the usage log resolved
+    from the unmodified settings while every other cached artefact honoured
+    ``--cache-dir``, and a run pointed at a temporary directory still appended
+    to the repository's real log.
     """
-    settings = Settings()
-    if data_dir is not None:
-        settings = settings.model_copy(update={"data_dir": data_dir})
-    return settings
+    overrides = {
+        key: value
+        for key, value in (("data_dir", data_dir), ("cache_dir", cache_dir))
+        if value is not None
+    }
+    return Settings().model_copy(update=overrides) if overrides else Settings()

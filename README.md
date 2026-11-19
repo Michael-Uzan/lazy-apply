@@ -67,6 +67,7 @@ uv run lazyapply ingest --data-dir ../data/example
 uv run lazyapply fit    --data-dir ../data/example ../data/example/roles/strong-match.txt
 uv run lazyapply fit    --data-dir ../data/example ../data/example/roles/bad-match.txt
 uv run lazyapply eval   --data-dir ../data/example --sweep
+uv run lazyapply cost
 ```
 
 ## Repository layout
@@ -558,9 +559,87 @@ two examples cannot do it.
 Measuring that the measurement is under-powered beats publishing a swept
 number from two data points.
 
-| Still pending | Slice |
-|---|---|
-| Cost per fit check | 10 |
+### What it costs
+
+Every provider call records its own token count, latency and price to
+`.cache/usage.jsonl` — one line, append-only, never rewritten.
+
+```
+$ lazyapply cost
+
+$0.0308 total
+3 call(s), 4,381 in / 1,449 out
+
+by command
+command           runs     total   per run   median run
+requirements         1   $0.0241   $0.0241      7,510ms
+fit                  1   $0.0067   $0.0067      9,349ms
+
+by model
+model             runs     total   per run  median call
+claude-opus-5        1   $0.0241   $0.0241      7,510ms
+claude-haiku-4-5     1   $0.0067   $0.0067      8,890ms
+voyage-3-lite        1   $0.0000   $0.0000        459ms
+```
+
+| | Cost | How often |
+|---|---|---|
+| Extract requirements (Opus 5) | **$0.0241** | once per posting, cached forever |
+| Check fit (Haiku 4.5 + Voyage) | **$0.0067** | every check |
+
+That ratio is the whole model-choice argument, measured: the expensive model
+runs **3.6× dearer** and runs **once**. Check the same posting ten times and
+extraction is amortised to a fifth of a cent while matching costs $0.067.
+
+Phase 1 cost **about $0.13 to build**, across ten slices.
+
+Three things the numbers are counted carefully to get right:
+
+**Per run, not per call.** A fit check makes two provider calls. "What does a
+`messages.parse` cost" is not a question anyone has, so calls of one
+invocation share a run id and the report divides by runs.
+
+**Latency means different things in the two tables.** A command's is its
+calls *summed* — a fit check is 459ms of embedding plus 8,890ms of judgment,
+and only 9,349ms describes the check. A model's stays per call. The first
+version took a median across both calls and reported 4,674ms, a number
+describing neither.
+
+**Cache hits are logged, priced at what they would have cost.** Otherwise the
+report shows money spent and says nothing about money not spent — and the
+caches are most of why this is cheap.
+
+```python
+# prices carry the date they were checked, and an unknown model raises
+"claude-opus-5":    Price(5.0, 25.0, CHECKED)   # $5 in / $25 out per MTok
+"claude-haiku-4-5": Price(1.0,  5.0, CHECKED)
+"voyage-3-lite":    Price(0.02, 0.0, CHECKED)
+```
+
+A model with no published price **raises** rather than costing nothing. A cost
+report that silently under-reports is worse than one that refuses to guess.
+
+### Extraction is not reproducible, so it is pinned
+
+Pricing that Opus call meant deleting a cached extraction and re-running it on
+the same posting. Same text, same content hash — and one requirement came back
+renamed:
+
+```
+- lab_instrumentation   [must-have]  Debugged hardware using an oscilloscope…
++ lab_debug_tools       [must-have]  Debugged hardware using an oscilloscope…
+```
+
+Same meaning, different slug. The golden set labels **by id**, so that one
+rename would have silently unlabelled a requirement.
+
+`lazyapply eval` caught it as label drift and refused to score — which is what
+that guard is for. And it is why `data/example/cache/roles/` is committed:
+the labels refer to one specific extraction, so that extraction is pinned
+rather than regenerated.
+
+A nice-to-have became a requirement here: an LLM is not a pure function of its
+input, so anything downstream that keys on its output has to pin it.
 
 ## License
 

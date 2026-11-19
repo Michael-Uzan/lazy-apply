@@ -9,7 +9,16 @@ from __future__ import annotations
 
 import typer
 
-from lazyapply_core.cli._shared import CacheDir, DataDir, Fake, InMemory, abort, settings_for
+from lazyapply_core.cli._shared import (
+    CacheDir,
+    DataDir,
+    Fake,
+    InMemory,
+    NoTelemetry,
+    abort,
+    run_for,
+    settings_for,
+)
 from lazyapply_core.embed import build_embedder
 from lazyapply_core.embed.base import EmbeddingError
 from lazyapply_core.ingest.parser import ParseError
@@ -22,12 +31,14 @@ def ingest(
     cache_dir: CacheDir = None,
     fake: Fake = False,
     in_memory: InMemory = False,
+    no_telemetry: NoTelemetry = False,
 ) -> None:
     """Parse, embed and store every evidence block."""
-    settings = settings_for(data_dir)
+    settings = settings_for(data_dir, cache_dir)
+    run = run_for("ingest", settings, no_telemetry=no_telemetry)
 
     try:
-        embedder = build_embedder(settings, fake=fake, cache_dir=cache_dir)
+        embedder = build_embedder(settings, fake=fake, cache_dir=cache_dir, run=run)
         store = build_store(settings, in_memory=in_memory)
         result = run_ingest(settings, embedder=embedder, store=store)
     except (ParseError, ValueError, EmbeddingError) as exc:
@@ -46,12 +57,14 @@ def search(
     cache_dir: CacheDir = None,
     fake: Fake = False,
     in_memory: InMemory = False,
+    no_telemetry: NoTelemetry = False,
 ) -> None:
     """Semantic search over stored evidence."""
-    settings = settings_for(data_dir)
+    settings = settings_for(data_dir, cache_dir)
+    run = run_for("search", settings, no_telemetry=no_telemetry)
 
     try:
-        embedder = build_embedder(settings, fake=fake, cache_dir=cache_dir)
+        embedder = build_embedder(settings, fake=fake, cache_dir=cache_dir, run=run)
         store = build_store(settings, in_memory=in_memory)
         if in_memory and store.count() == 0:
             run_ingest(settings, embedder=embedder, store=store)
