@@ -22,6 +22,8 @@ class FakeEmbedder:
         self._dimensions = dimensions
         self._model = model
         self.calls = 0
+        self.requests = 0
+        """Round trips made. Batching is about this, not about `calls`."""
         """Texts embedded so far. Tests assert on it to prove the cache
         actually prevented work, rather than merely appearing to."""
 
@@ -34,12 +36,19 @@ class FakeEmbedder:
         return self._dimensions
 
     def embed_documents(self, texts: Sequence[str]) -> tuple[Vector, ...]:
+        self.requests += 1
         self.calls += len(texts)
         return tuple(self._vector(text) for text in texts)
 
     def embed_query(self, text: str) -> Vector:
+        self.requests += 1
         self.calls += 1
         return self._vector(text)
+
+    def embed_queries(self, texts: Sequence[str]) -> tuple[Vector, ...]:
+        self.requests += 1
+        self.calls += len(texts)
+        return tuple(self._vector(text) for text in texts)
 
     def _vector(self, text: str) -> Vector:
         # Seed from the text so the mapping is stable across processes and

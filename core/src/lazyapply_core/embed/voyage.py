@@ -57,7 +57,13 @@ class VoyageEmbedder:
         return tuple(vectors)
 
     def embed_query(self, text: str) -> Vector:
-        return self._embed([text], input_type="query")[0]
+        return self.embed_queries([text])[0]
+
+    def embed_queries(self, texts: Sequence[str]) -> tuple[Vector, ...]:
+        vectors: list[Vector] = []
+        for batch in _batched(texts, self._batch_size):
+            vectors.extend(self._embed(batch, input_type="query"))
+        return tuple(vectors)
 
     def _embed(self, texts: Sequence[str], *, input_type: str) -> tuple[Vector, ...]:
         if not texts:

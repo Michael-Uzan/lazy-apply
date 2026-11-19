@@ -44,3 +44,11 @@ class Embedder(Protocol):
 
     def embed_query(self, text: str) -> Vector:
         """Embed a single search query."""
+
+    def embed_queries(self, texts: Sequence[str]) -> tuple[Vector, ...]:
+        """Embed several queries in one round trip.
+
+        A role has roughly ten requirements and each is a query. One
+        request each would be ten round trips, which a rate-limited free
+        tier turns into minutes of waiting.
+        """

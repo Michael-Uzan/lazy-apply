@@ -17,6 +17,7 @@ from lazyapply_core.domain.fit import (
     RequirementMatch,
     Verdict,
 )
+from lazyapply_core.domain.pack import EvidencePack, RequirementEvidence
 from lazyapply_core.domain.profile import Education, Link, Position, Profile
 from lazyapply_core.domain.role import (
     Requirement,
@@ -30,6 +31,7 @@ __all__ = [
     "EndDate",
     "Evidence",
     "EvidenceId",
+    "EvidencePack",
     "FitReport",
     "Link",
     "MatchStatus",
@@ -37,6 +39,7 @@ __all__ = [
     "Profile",
     "Requirement",
     "RequirementCategory",
+    "RequirementEvidence",
     "RequirementKind",
     "RequirementMatch",
     "Role",

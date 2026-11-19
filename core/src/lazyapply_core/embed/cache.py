@@ -51,6 +51,9 @@ class CachedEmbedder:
     def embed_query(self, text: str) -> Vector:
         return self._inner.embed_query(text)
 
+    def embed_queries(self, texts: Sequence[str]) -> tuple[Vector, ...]:
+        return self._inner.embed_queries(texts)
+
     def missing(self, texts: Sequence[str]) -> list[str]:
         """Texts with no stored vector, deduplicated, in first-seen order.
 

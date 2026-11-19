@@ -223,38 +223,73 @@ and a GENERATE / BORDERLINE / SKIP decision.
 Validation rejects an extraction with no requirements, duplicate ids, or no
 must-have — coverage divides by that count.
 
-## Does retrieval actually work?
+## Retrieving evidence, per requirement
 
-A smoke test, not an evaluation — six blocks, five queries. Six documents
-cannot establish retrieval quality; that is measured properly below.
+Each requirement gets its own search, not one search for the whole posting.
+That is what makes a gap identifiable: a requirement with nothing near it has
+no candidate evidence.
 
-The sample candidate, **Dana Levi**, is fictional: a full-stack engineer with
-React, TypeScript, GraphQL, Node.js and Python experience, and no hardware
-background whatsoever. Her six evidence blocks live in `data/example/`.
-
-Run against `data/example/` with `voyage-3-lite` (512-dim, cosine):
-
-| Query | Top match | Score | Runner-up |
-|---|---|---|---|
-| "GraphQL API design across microservices" | `graphql-federation-across-four-services` | **0.662** | 0.366 |
-| "experience tuning search relevance" | `internal-search-over-research-documents` | **0.584** | 0.217 |
-| "leading and mentoring engineers" | `mentoring-and-code-review-culture` | **0.501** | 0.316 |
-| "front-end performance optimisation" | `real-time-trading-dashboard` | **0.485** | 0.411 |
-| "embedded C firmware for medical devices" | _(nothing relevant)_ | 0.229 | 0.164 |
-
-```bash
-uv run lazyapply search "GraphQL API design across microservices" --data-dir ../data/example
+```
+Role (11 requirements)
+  └─ embed_queries([...])          1 batched request → 11 vectors
+       └─ search(v, top_k=2)       11 searches → 22 hits
+            └─ EvidencePack        11 items, each with its own hits
+                 └─ unique_evidence()  6 blocks sent to the model
 ```
 
-**Why these scores are good.** Absolute cosine values are model-specific, so
-what matters is separation. Work Dana did: 0.49-0.66, correct block first.
-Work she never did: 0.229. A 2-3x gap — and that gap *is* gap detection. No
-model opinion needed to say evidence is missing.
+Batching matters: 11 separate requests on a 3 RPM free tier is four minutes.
+Deduplication matters too — the same block is retrieved for several
+requirements, so the prompt carries it once and refers to it by id.
 
-Two details: "experience tuning search relevance" shares no words with the
-block it found, so keyword search returns nothing there. And the narrow
-0.485/0.411 row is retrieval being correctly uncertain — several blocks do
-discuss performance. Hence thresholds from labelled data, not guesses.
+### What the scores actually look like
+
+Every requirement retrieves a best match with a score. Collecting those
+across both example postings:
+
+| Posting | Requirements | Weakest match | Average | Strongest match |
+|---|---|---|---|---|
+| Full-stack (Dana's field) | 11 | 0.353 | 0.465 | 0.561 |
+| Embedded firmware (not her field) | 10 | 0.197 | 0.249 | 0.333 |
+
+Read the first row as: of 11 requirements, even the worst-retrieving one found
+evidence at 0.353. Read the second as: of 10 firmware requirements, even the
+best one only reached 0.333.
+
+So the two ranges do not overlap — **by 0.020**.
+
+**Is 0.353 a good score?** On its own it means nothing. These are cosine
+similarities, not percentages, and the scale is specific to `voyage-3-lite` —
+another model would score the same pair differently and be equally right. Only
+reading the pair tells you:
+
+| Score | Requirement | Retrieved block | Correct? |
+|---|---|---|---|
+| 0.353 | "Made architectural decisions and owned a major part of a product" | GraphQL federation | yes — it describes designing a federated schema and owning the review process |
+| 0.333 | "Followed a safety-critical lifecycle such as DO-178C" | Event-driven order pipeline | no — shares words like "pipeline", nothing else |
+
+Twenty thousandths apart; one right, one nonsense. Which is why the numbers
+below are labelled by hand before any threshold is chosen.
+
+That thin margin is the most useful result here, and it argues for the
+architecture rather than against it. A score threshold alone would be
+fragile: 0.34 separates these two postings perfectly and would likely fail on
+a third, since rewording one requirement moves a score by more than 0.02.
+
+Retrieval always returns *something* — asked for firmware evidence it returns
+the least-irrelevant block it has. So distance narrows the candidates; whether
+they actually prove the requirement is the model's call. Distance was never
+meant to render the verdict, and these numbers are why.
+
+One requirement shows the limit of retrieval entirely:
+
+```
+ee_ce_degree  [must-have]  Earned a bachelor's degree in electrical engineering
+    0.251  ev_orchid__mentoring-and-code-review-culture
+```
+
+No impact story says "I have a degree". Education and duration requirements
+are facts to check against `profile.json`, not similarity questions — handled
+by routing on `category`, not by retrieval.
 
 ## Measured results
 
