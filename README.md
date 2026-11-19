@@ -104,9 +104,43 @@ gateway. Time-to-interactive went from 4.2s to 900ms.
 Becomes `ev_northwind__real-time-trading-dashboard` — readable, so citations in
 a fit report can be checked by eye.
 
+## Does retrieval actually work?
+
+A smoke test, not an evaluation — six blocks, five queries. Six documents
+cannot establish retrieval quality; that is measured properly below.
+
+The sample candidate, **Dana Levi**, is fictional: a full-stack engineer with
+React, TypeScript, GraphQL, Node.js and Python experience, and no hardware
+background whatsoever. Her six evidence blocks live in `data/example/`.
+
+Run against `data/example/` with `voyage-3-lite` (512-dim, cosine):
+
+| Query | Top match | Score | Runner-up |
+|---|---|---|---|
+| "GraphQL API design across microservices" | `graphql-federation-across-four-services` | **0.662** | 0.366 |
+| "experience tuning search relevance" | `internal-search-over-research-documents` | **0.584** | 0.217 |
+| "leading and mentoring engineers" | `mentoring-and-code-review-culture` | **0.501** | 0.316 |
+| "front-end performance optimisation" | `real-time-trading-dashboard` | **0.485** | 0.411 |
+| "embedded C firmware for medical devices" | _(nothing relevant)_ | 0.229 | 0.164 |
+
+```bash
+uv run lazyapply search "GraphQL API design across microservices" --data-dir ../data/example
+```
+
+**Why these scores are good.** Absolute cosine values are model-specific, so
+what matters is separation. Work Dana did: 0.49-0.66, correct block first.
+Work she never did: 0.229. A 2-3x gap — and that gap *is* gap detection. No
+model opinion needed to say evidence is missing.
+
+Two details: "experience tuning search relevance" shares no words with the
+block it found, so keyword search returns nothing there. And the narrow
+0.485/0.411 row is retrieval being correctly uncertain — several blocks do
+discuss performance. Hence thresholds from labelled data, not guesses.
+
 ## Measured results
 
-Populated in slice 9-10, from `lazyapply eval` and `lazyapply cost`.
+Populated in slice 9-10, from `lazyapply eval` and `lazyapply cost`. Unlike
+the smoke test above, these run against a hand-labelled golden set.
 
 | Metric | Value |
 |---|---|

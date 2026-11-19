@@ -34,6 +34,12 @@ Fake = Annotated[
 ]
 
 
+InMemory = Annotated[
+    bool,
+    typer.Option("--in-memory", help="Use an in-process vector store instead of Qdrant."),
+]
+
+
 def settings_for(data_dir: Path | None) -> Settings:
     return load_settings(data_dir)
 

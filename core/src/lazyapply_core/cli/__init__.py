@@ -10,6 +10,7 @@ import typer
 
 from lazyapply_core.cli import embed as embed_cmd
 from lazyapply_core.cli import evidence
+from lazyapply_core.cli import ingest as ingest_cmd
 
 app = typer.Typer(
     help="Lazy Apply — grounded RAG fit engine.",
@@ -18,5 +19,7 @@ app = typer.Typer(
 )
 app.add_typer(evidence.app, name="evidence")
 app.command("embed")(embed_cmd.embed)
+app.command("ingest")(ingest_cmd.ingest)
+app.command("search")(ingest_cmd.search)
 
 __all__ = ["app"]

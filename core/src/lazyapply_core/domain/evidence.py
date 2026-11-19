@@ -9,13 +9,17 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 #: Calendar month, e.g. "2023-05". Day-level precision is noise for a CV.
 YearMonth = Annotated[str, StringConstraints(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")]
 
 #: An end date is either a month or the open-ended present.
 EndDate = YearMonth | Literal["present"]
+
+#: Floating-point slack on cosine scores. A unit vector dotted with itself
+#: computes to 1.0000000000000002 — noise, not an out-of-range score.
+_SCORE_TOLERANCE = 1e-9
 
 #: Readable citation anchor, e.g. "ev_leverate__multi-agent-llm-orchestration".
 _SLUG = r"[a-z0-9]+(?:-[a-z0-9]+)*"
@@ -63,5 +67,19 @@ class ScoredEvidence(BaseModel):
 
     evidence: Evidence
     score: float = Field(ge=-1.0, le=1.0)
-    """Cosine similarity from Qdrant. Recorded for eval tuning, never used
-    directly to decide a verdict."""
+    """Cosine similarity. Recorded for eval tuning, never used directly to
+    decide a verdict."""
+
+    @field_validator("score", mode="before")
+    @classmethod
+    def _clamp_rounding_noise(cls, value: float) -> float:
+        """Clamp scores a hair outside [-1, 1]; leave real violations to fail.
+
+        Clamping everything would hide genuine bugs — a score of 5.0 means
+        something upstream is broken and should say so.
+        """
+        if 1.0 < value <= 1.0 + _SCORE_TOLERANCE:
+            return 1.0
+        if -1.0 - _SCORE_TOLERANCE <= value < -1.0:
+            return -1.0
+        return value

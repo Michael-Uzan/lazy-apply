@@ -18,6 +18,16 @@ from typing import Protocol, runtime_checkable
 Vector = tuple[float, ...]
 
 
+class EmbeddingError(Exception):
+    """The embedding provider failed.
+
+    Rate limits, auth failures and outages are normal operating conditions
+    for a networked dependency, not bugs. They get their own type so the
+    CLI can report one line instead of a traceback, while a genuine defect
+    in our own code still raises loudly.
+    """
+
+
 @runtime_checkable
 class Embedder(Protocol):
     @property

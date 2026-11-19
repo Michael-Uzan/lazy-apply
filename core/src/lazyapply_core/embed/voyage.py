@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from typing import Any
 
-from lazyapply_core.embed.base import Vector
+from lazyapply_core.embed.base import EmbeddingError, Vector
 
 DEFAULT_MODEL = "voyage-3-lite"
 DEFAULT_DIMENSIONS = 512
@@ -63,7 +63,11 @@ class VoyageEmbedder:
         if not texts:
             return ()
 
-        response = self._client.embed(list(texts), model=self._model, input_type=input_type)
+        try:
+            response = self._client.embed(list(texts), model=self._model, input_type=input_type)
+        except Exception as exc:
+            raise EmbeddingError(f"{self._model}: {exc}") from exc
+
         vectors = tuple(tuple(float(v) for v in e) for e in response.embeddings)
 
         for vector in vectors:

@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+from lazyapply_core.embed.base import EmbeddingError
 from lazyapply_core.embed.voyage import VoyageEmbedder
 
 
@@ -88,3 +89,42 @@ class TestEdges:
     def test_requires_an_api_key_when_building_its_own_client(self) -> None:
         with pytest.raises(ValueError, match="VOYAGE_API_KEY"):
             VoyageEmbedder(api_key="")
+
+
+@dataclass
+class FailingClient:
+    """Stands in for any provider-side failure: rate limit, auth, outage."""
+
+    error: Exception
+
+    def embed(self, texts: list[str], *, model: str, input_type: str) -> StubResponse:
+        raise self.error
+
+
+class TestProviderFailures:
+    """Provider errors are expected operating conditions, not crashes. They
+    must surface as EmbeddingError so the CLI can print one line."""
+
+    def test_rate_limit_becomes_an_embedding_error(self) -> None:
+        client = FailingClient(RuntimeError("rate limit: 3 RPM"))
+        with pytest.raises(EmbeddingError, match="rate limit"):
+            VoyageEmbedder(client=client, dimensions=8).embed_documents(["a"])
+
+    def test_query_failures_too(self) -> None:
+        client = FailingClient(RuntimeError("boom"))
+        with pytest.raises(EmbeddingError):
+            VoyageEmbedder(client=client, dimensions=8).embed_query("a")
+
+    def test_the_original_error_is_kept_as_the_cause(self) -> None:
+        original = RuntimeError("underlying detail")
+        client = FailingClient(original)
+        with pytest.raises(EmbeddingError) as info:
+            VoyageEmbedder(client=client, dimensions=8).embed_documents(["a"])
+        assert info.value.__cause__ is original
+
+    def test_a_dimension_mismatch_is_not_swallowed_as_a_provider_error(
+        self, stub: StubClient
+    ) -> None:
+        """Our own validation must stay distinguishable from provider faults."""
+        with pytest.raises(ValueError, match="dimensions"):
+            VoyageEmbedder(client=stub, dimensions=512).embed_documents(["a"])

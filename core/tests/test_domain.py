@@ -12,6 +12,7 @@ from lazyapply_core.domain import (
     RequirementCategory,
     RequirementKind,
     Role,
+    ScoredEvidence,
 )
 
 
@@ -81,3 +82,29 @@ class TestProfile:
         profile = Profile.model_validate(raw)
         assert profile.name == "Dana Levi"
         assert profile.positions[0].end == "present"
+
+
+class TestScoredEvidence:
+    """Cosine similarity is mathematically in [-1, 1], but floating-point
+    arithmetic overshoots: a unit vector dotted with itself yields
+    1.0000000000000002. Tiny overshoot is noise and is clamped; a genuinely
+    out-of-range score is a bug and still fails."""
+
+    def _scored(self, evidence: Evidence, score: float) -> ScoredEvidence:
+        return ScoredEvidence(evidence=evidence, score=score)
+
+    def test_clamps_floating_point_overshoot_above_one(self, evidence: Evidence) -> None:
+        assert self._scored(evidence, 1.0000000000000002).score == 1.0
+
+    def test_clamps_floating_point_overshoot_below_minus_one(self, evidence: Evidence) -> None:
+        assert self._scored(evidence, -1.0000000000000002).score == -1.0
+
+    def test_leaves_ordinary_scores_alone(self, evidence: Evidence) -> None:
+        assert self._scored(evidence, 0.5843).score == 0.5843
+
+    @pytest.mark.parametrize("bad_score", [1.5, -2.0, 100.0])
+    def test_rejects_scores_that_are_actually_wrong(
+        self, evidence: Evidence, bad_score: float
+    ) -> None:
+        with pytest.raises(ValidationError):
+            self._scored(evidence, bad_score)
