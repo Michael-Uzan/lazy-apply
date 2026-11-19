@@ -42,6 +42,21 @@ class Requirement(BaseModel):
     kind: RequirementKind
     category: RequirementCategory
 
+    @property
+    def is_hard_fact(self) -> bool:
+        """True when this requirement is answered by profile.json, not by
+        retrieval.
+
+        A degree is a fact the candidate either holds or does not. Searching
+        impact stories for it cannot answer the question, but retrieval always
+        returns its nearest neighbours anyway -- in testing, "bachelor's in
+        electrical engineering" pulled back a story about mentoring culture at
+        0.251 and gave the matching step something irrelevant to reason over.
+        These requirements therefore skip retrieval entirely and are judged
+        against the verbatim facts.
+        """
+        return self.category is RequirementCategory.EDUCATION
+
 
 class Role(BaseModel):
     model_config = ConfigDict(frozen=True)

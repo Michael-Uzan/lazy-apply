@@ -287,9 +287,114 @@ ee_ce_degree  [must-have]  Earned a bachelor's degree in electrical engineering
     0.251  ev_orchid__mentoring-and-code-review-culture
 ```
 
-No impact story says "I have a degree". Education and duration requirements
-are facts to check against `profile.json`, not similarity questions — handled
-by routing on `category`, not by retrieval.
+No impact story says "I have a degree". Searching for one returns the
+least-irrelevant block in the collection, and the model then has to reason
+over something unrelated.
+
+So education requirements skip retrieval entirely and are judged against
+`profile.json`. One property on the domain type does it:
+
+```python
+@property
+def is_hard_fact(self) -> bool:
+    return self.category is RequirementCategory.EDUCATION
+```
+
+The requirement still appears in the pack, is still judged, still counts
+toward coverage — it just arrives with no hits, because none were asked for.
+Its query is never embedded either, so a posting full of hard facts costs
+less rather than more.
+
+## The verdict: a model judges, code decides
+
+The model answers one question per requirement. Code answers the only
+question the user asked.
+
+```
+EvidencePack + profile.json
+  └─ judge     claude-haiku-4-5, one request for the whole role
+     │           → STRONG | PARTIAL | NONE, cited ids, one sentence each
+     └─ verify  every cited id must be in the pack we sent
+        │         → a bad citation is a hard failure, not a warning
+        └─ decide    pure function: no model, no network
+                     → coverage, score, verdict, gaps
+```
+
+The order is the point: an ungrounded judgment never reaches step 3, because
+step 3's output is what the user acts on.
+
+### Statuses become numbers
+
+| Status | Points | Meaning |
+|---|---|---|
+| STRONG | 1.0 | The evidence directly shows it |
+| PARTIAL | 0.5 | Adjacent, smaller, or older than asked |
+| NONE | 0.0 | Nothing given supports it |
+
+Half for PARTIAL because both alternatives are worse. Zero rejects people who
+could defend the point in an interview; one sends them in unprepared.
+
+```
+coverage = points over must-haves ÷ number of must-haves in the role
+score    = 100 × (0.8 × must-have ratio + 0.2 × nice-to-have ratio)
+```
+
+Two numbers because there are two questions. **Coverage: may I apply at all?**
+Nice-to-haves are invisible to it — a "Kubernetes a plus" you lack must never
+block an application. **Score: how good is this application?** Must-haves are
+80% of it, so meeting every nice-to-have and no must-have scores 20 and
+rescues nobody.
+
+The denominator is every must-have *in the role*, not every one the model
+answered. Otherwise a model that skipped four of eight requirements would
+score 100%.
+
+| coverage | score | Verdict | What happens in Phase 2 |
+|---|---|---|---|
+| < 0.60 | — | **SKIP** | No CV. The gap list is returned instead |
+| ≥ 0.80 | ≥ 70 | **GENERATE** | The CV agent runs |
+| anything else | | **BORDERLINE** | Shown to the user to decide |
+
+The score check on GENERATE catches a coverage met entirely by PARTIALs —
+technically covered, but thinly. All three numbers live in `config.py` and get
+swept against the golden set in slice 9. A number inside a prompt cannot be
+swept.
+
+### It works on both example postings
+
+```
+$ lazyapply fit data/example/roles/strong-match.txt
+verdict   GENERATE          coverage 100%    score 100/100
+strong    api_design  [must-have]
+          Designed and shipped a federated GraphQL layer unifying multiple services.
+          → ev_northwind__graphql-federation-across-four-services
+
+$ lazyapply fit data/example/roles/bad-match.txt
+verdict   SKIP              coverage 0%      score 0/100
+none      ee_ce_degree  [must-have]
+          The candidate holds a B.Sc. in Computer Science, not a degree in
+          electrical engineering or computer engineering.
+```
+
+Every STRONG and PARTIAL carries the ids it was based on, so any claim can be
+looked up. `ee_ce_degree` cites nothing because nothing was retrieved for it —
+that answer came from the facts block.
+
+### Why the verdict is not the model's to make
+
+Running the firmware posting twice, Haiku changed its mind on exactly one
+requirement — whether clinical-trial ETL work counts as medical-device
+software under IEC 62304. A genuinely arguable call.
+
+| Run | `medical_regulatory` | coverage | Verdict |
+|---|---|---|---|
+| 1 | NONE | 0% | SKIP |
+| 2 | PARTIAL | 6% | SKIP |
+
+The judgment moved. The decision did not. A model flipping one call in ten
+cannot flip the outcome, because the outcome is arithmetic over ten calls
+rather than an eleventh opinion. Had the model been asked for the verdict
+directly, there would be nothing to say about this.
 
 ## Measured results
 

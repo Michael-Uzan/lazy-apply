@@ -22,10 +22,11 @@ class FakeEmbedder:
         self._dimensions = dimensions
         self._model = model
         self.calls = 0
-        self.requests = 0
-        """Round trips made. Batching is about this, not about `calls`."""
         """Texts embedded so far. Tests assert on it to prove the cache
         actually prevented work, rather than merely appearing to."""
+
+        self.requests = 0
+        """Round trips made. Batching is about this, not about `calls`."""
 
     @property
     def model(self) -> str:

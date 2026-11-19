@@ -10,6 +10,7 @@ import typer
 
 from lazyapply_core.cli import embed as embed_cmd
 from lazyapply_core.cli import evidence, profile
+from lazyapply_core.cli import fit as fit_cmd
 from lazyapply_core.cli import ingest as ingest_cmd
 from lazyapply_core.cli import pack as pack_cmd
 from lazyapply_core.cli import requirements as requirements_cmd
@@ -28,5 +29,6 @@ app.command("ingest")(ingest_cmd.ingest)
 app.command("search")(ingest_cmd.search)
 app.command("requirements")(requirements_cmd.requirements)
 app.command("pack")(pack_cmd.pack)
+app.command("fit")(fit_cmd.fit)
 
 __all__ = ["app"]

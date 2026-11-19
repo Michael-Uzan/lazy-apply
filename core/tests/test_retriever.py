@@ -126,3 +126,73 @@ class TestBestScore:
         pack = build_pack(role("a"), embedder=embedder, store=empty, top_k=3)
         assert pack.items[0].hits == ()
         assert pack.items[0].best_score is None
+
+
+class TestHardFacts:
+    """Education requirements are answered by profile.json, not by search.
+
+    Retrieval always returns its nearest neighbours. Asked for a degree it
+    returned a story about mentoring culture -- so these requirements skip
+    retrieval and keep the irrelevant block out of the matching prompt.
+    """
+
+    def education(self) -> Role:
+        return Role(
+            role_id="r1",
+            title="Test Role",
+            raw_text="...",
+            requirements=(
+                Requirement(
+                    id="degree",
+                    text="Earned a bachelor's degree in electrical engineering",
+                    kind=RequirementKind.MUST_HAVE,
+                    category=RequirementCategory.EDUCATION,
+                ),
+                Requirement(
+                    id="react",
+                    text="Built production web applications with React",
+                    kind=RequirementKind.MUST_HAVE,
+                    category=RequirementCategory.SKILL,
+                ),
+            ),
+        )
+
+    def test_the_requirement_still_appears_in_the_pack(self, embedder, store) -> None:
+        """It is still judged and still counts toward coverage; only its
+        evidence comes from somewhere else."""
+        pack = build_pack(self.education(), embedder=embedder, store=store, top_k=3)
+        assert [i.requirement.id for i in pack.items] == ["degree", "react"]
+
+    def test_nothing_is_retrieved_for_it(self, embedder, store) -> None:
+        pack = build_pack(self.education(), embedder=embedder, store=store, top_k=3)
+        assert pack.items[0].hits == ()
+
+    def test_other_requirements_are_unaffected(self, embedder, store) -> None:
+        pack = build_pack(self.education(), embedder=embedder, store=store, top_k=3)
+        assert len(pack.items[1].hits) == 3
+
+    def test_its_text_is_never_embedded(self, embedder, store) -> None:
+        """Skipping retrieval also skips the query embedding, so a posting
+        full of hard facts costs less rather than more."""
+        before = embedder.calls
+        build_pack(self.education(), embedder=embedder, store=store, top_k=3)
+        assert embedder.calls == before + 1
+
+    def test_a_role_of_only_hard_facts_makes_no_embedding_request(self, embedder, store) -> None:
+        only = Role(
+            role_id="r1",
+            title="Test Role",
+            raw_text="...",
+            requirements=(
+                Requirement(
+                    id="degree",
+                    text="Earned a bachelor's degree",
+                    kind=RequirementKind.MUST_HAVE,
+                    category=RequirementCategory.EDUCATION,
+                ),
+            ),
+        )
+        before = embedder.requests
+        pack = build_pack(only, embedder=embedder, store=store, top_k=3)
+        assert embedder.requests == before
+        assert pack.items[0].hits == ()
