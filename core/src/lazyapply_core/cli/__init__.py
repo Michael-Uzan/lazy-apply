@@ -9,7 +9,7 @@ from __future__ import annotations
 import typer
 
 from lazyapply_core.cli import embed as embed_cmd
-from lazyapply_core.cli import evidence
+from lazyapply_core.cli import evidence, profile
 from lazyapply_core.cli import ingest as ingest_cmd
 
 app = typer.Typer(
@@ -21,5 +21,6 @@ app.add_typer(evidence.app, name="evidence")
 app.command("embed")(embed_cmd.embed)
 app.command("ingest")(ingest_cmd.ingest)
 app.command("search")(ingest_cmd.search)
+app.add_typer(profile.app, name="profile")
 
 __all__ = ["app"]

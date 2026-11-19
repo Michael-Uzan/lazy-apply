@@ -104,6 +104,68 @@ gateway. Time-to-interactive went from 4.2s to 900ms.
 Becomes `ev_northwind__real-time-trading-dashboard` — readable, so citations in
 a fit report can be checked by eye.
 
+## Profile: the hard facts
+
+`data/profile.json` holds what must never be generated — dates, degrees,
+titles, links. It is injected verbatim into every prompt and never passes
+through retrieval, so it cannot be hallucinated. Validated strictly on load.
+
+```json
+{
+  "name": "Dana Levi",
+  "headline": "Full-Stack & AI Engineer",
+  "location": "Tel Aviv, Israel",
+  "email": "dana.levi@example.com",
+  "links":     [{ "label": "GitHub", "url": "https://github.com/example-dana" }],
+  "education": [{ "degree": "B.Sc. Computer Science", "institution": "Technion",
+                  "graduated": "2018-06" }],
+  "positions": [{ "company": "Northwind Trading", "title": "Senior Full-Stack Engineer",
+                  "start": "2022-03", "end": "present" }],
+  "stack": ["TypeScript", "React", "Node.js", "Python"]
+}
+```
+
+`lazyapply profile show` prints it with a `version` — a hash of the facts that
+invalidates cached fit reports when a fact changes, but not when the file is
+merely reformatted.
+
+## What lands in Qdrant
+
+One evidence block becomes one point. Collection `evidence_v1`, 512-dim,
+cosine, reached through the alias `evidence`.
+
+```json
+{
+  "id": "23c802b4-1f8f-5d02-b37f-10b74e5ba500",
+  "vector": [-0.017, 0.0026, 0.0607, 0.0104, "... 508 more"],
+  "payload": {
+    "evidence_id":   "ev_orchid__python-etl-for-clinical-data",
+    "title":         "Python ETL for clinical data",
+    "body":          "Built the ingestion pipeline that normalized ...",
+    "composed_text": "Orchid Labs — Python ETL for clinical data\ntags: python, etl, ...",
+    "content_hash":  "e595f2d120bb4f66",
+    "company": "Orchid Labs", "role": "Software Engineer",
+    "start": "2018-09", "end": "2022-02",
+    "tags": ["python", "etl", "postgresql", "data-engineering"],
+    "source_file": "orchid.md"
+  }
+}
+```
+
+Three choices worth noting:
+
+- **The id is `uuid5(fixed_namespace, evidence_id)`.** Qdrant takes UUIDs or
+  integers, not slugs. Deriving it deterministically means re-running ingest
+  replaces the point instead of adding a duplicate.
+- **The whole Evidence is the payload.** Search returns usable objects, not
+  ids needing a second lookup against the markdown.
+- **`body` and `composed_text` are both stored.** Only `composed_text` was
+  embedded; `body` is what a human reads. Keeping both makes "why did this
+  match?" answerable.
+
+`tags`, `company` and `source_file` carry keyword indexes, so filtered search
+(e.g. evidence from one employer) does not scan the collection.
+
 ## Does retrieval actually work?
 
 A smoke test, not an evaluation — six blocks, five queries. Six documents
