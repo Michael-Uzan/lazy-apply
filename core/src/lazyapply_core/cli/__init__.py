@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import typer
 
+from lazyapply_core.cli import embed as embed_cmd
 from lazyapply_core.cli import evidence
 
 app = typer.Typer(
@@ -16,5 +17,6 @@ app = typer.Typer(
     add_completion=False,
 )
 app.add_typer(evidence.app, name="evidence")
+app.command("embed")(embed_cmd.embed)
 
 __all__ = ["app"]

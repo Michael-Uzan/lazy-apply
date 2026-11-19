@@ -19,6 +19,21 @@ DataDir = Annotated[
 ]
 
 
+CacheDir = Annotated[
+    Path | None,
+    typer.Option(
+        "--cache-dir",
+        help="Where embedding vectors are cached. Defaults to ./.cache.",
+        show_default=False,
+    ),
+]
+
+Fake = Annotated[
+    bool,
+    typer.Option("--fake", help="Use the fake embedder: no API key, no network, no cost."),
+]
+
+
 def settings_for(data_dir: Path | None) -> Settings:
     return load_settings(data_dir)
 
