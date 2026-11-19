@@ -561,8 +561,31 @@ number from two data points.
 
 ### What it costs
 
-Every provider call records its own token count, latency and price to
-`.cache/usage.jsonl` — one line, append-only, never rewritten.
+Telemetry here answers one question — *what does this cost?* — which decides
+everything about its shape. The numbers must be real, so they come from the
+provider's own token count. And the measurement must never break what it
+measures.
+
+```
+a provider call happens
+   │
+   ├─ Usage(tokens, latency, model, command, run) ──→ .cache/usage.jsonl
+   │                                                    one line, appended
+   └─ the command carries on regardless                 cost baked in
+                                                             │
+                                                      lazyapply cost
+```
+
+One line per call, append-only, never rewritten. You can `tail -f` it while a
+command runs:
+
+```json
+{"command": "fit", "model": "voyage-3-lite",    "input_tokens": 100,  "output_tokens": 0,   "latency_ms": 459,  "cost_usd": 0.000002, "run": "9a0c470f6ff7"}
+{"command": "fit", "model": "claude-haiku-4-5", "input_tokens": 2583, "output_tokens": 825, "latency_ms": 8890, "cost_usd": 0.006708, "run": "9a0c470f6ff7"}
+```
+
+Same `run` on both lines — that is what makes the report answer "what does a
+fit check cost" rather than "what does an API call cost".
 
 ```
 $ lazyapply cost
@@ -593,31 +616,75 @@ extraction is amortised to a fifth of a cent while matching costs $0.067.
 
 Phase 1 cost **about $0.13 to build**, across ten slices.
 
-Three things the numbers are counted carefully to get right:
+### Four decisions behind the numbers
 
-**Per run, not per call.** A fit check makes two provider calls. "What does a
-`messages.parse` cost" is not a question anyone has, so calls of one
-invocation share a run id and the report divides by runs.
+**Latency means different things in the two tables.**
 
-**Latency means different things in the two tables.** A command's is its
-calls *summed* — a fit check is 459ms of embedding plus 8,890ms of judgment,
-and only 9,349ms describes the check. A model's stays per call. The first
-version took a median across both calls and reported 4,674ms, a number
-describing neither.
-
-**Cache hits are logged, priced at what they would have cost.** Otherwise the
-report shows money spent and says nothing about money not spent — and the
-caches are most of why this is cheap.
-
-```python
-# prices carry the date they were checked, and an unknown model raises
-"claude-opus-5":    Price(5.0, 25.0, CHECKED)   # $5 in / $25 out per MTok
-"claude-haiku-4-5": Price(1.0,  5.0, CHECKED)
-"voyage-3-lite":    Price(0.02, 0.0, CHECKED)
+```
+by command   459ms embedding  +  8,890ms judgment  =  9,349ms   ← the check
+by model     459ms embedding  |  8,890ms judgment              ← one call each
 ```
 
-A model with no published price **raises** rather than costing nothing. A cost
-report that silently under-reports is worse than one that refuses to guess.
+The first version took a median across both calls and printed **4,674ms** — a
+number describing neither. A command's time is its calls summed; a model's
+stays per call. Median rather than mean in both, so one rate-limited retry
+cannot define what a command normally feels like.
+
+**Cache hits are logged, priced at what they would have cost.** Two prices for
+the same event: `cost_usd` is 0 because no request was made, and list price is
+what it would have been. The difference is the cache's value, and this log is
+the only place it is visible — a report of money spent otherwise says nothing
+about money *not* spent.
+
+**A refusal is still recorded.**
+
+| What happened | Logged? | Why |
+|---|---|---|
+| Provider raised | no | no response, so no tokens to read — inventing them is phantom spend |
+| Model declined the schema | **yes** | the request succeeded and the tokens were spent |
+
+The record sits after the `try/except` and before the schema check. A refusal
+loop is exactly what someone would open this report to find.
+
+**Telemetry observes; it never participates.**
+
+```python
+except OSError:
+    # a full disk must not take the command down with it
+    return None
+```
+
+Losing a cost line is a nuisance. Failing the fit check the user asked for is
+not acceptable. For the same reason the recorder is a protocol with a real
+no-op default (`NullTelemetry`) rather than an `Optional` — four provider call
+sites, none of which can forget a `None` check that does not exist.
+
+### Prices are the one thing that cannot be wrong quietly
+
+```python
+CHECKED = "2026-11-19"          # every entry carries the date it was verified
+
+PRICES = {
+    "claude-opus-5":    Price(5.0, 25.0, CHECKED),   # $5 in / $25 out per MTok
+    "claude-haiku-4-5": Price(1.0,  5.0, CHECKED),
+    "voyage-3-lite":    Price(0.02, 0.0, CHECKED),
+}
+```
+
+A wrong price is undetectable — every figure downstream still looks plausible.
+So two rules:
+
+```python
+raise UnknownModelError(f"no published price for {model!r}")
+```
+
+An unrecognised model **raises**. The tempting alternative, `PRICES.get(model,
+Price(0, 0))`, never crashes and is always wrong: change `judgment_model` in
+`config.py` and the report would say $0.00 forever. A cost report that
+silently under-reports is worse than one that refuses to guess.
+
+And the cost is **written into each line, not derived on read**. A report of
+what last month cost must not change when a provider changes a price.
 
 ### Extraction is not reproducible, so it is pinned
 
