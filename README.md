@@ -174,22 +174,30 @@ call turns one into the other, cached forever by a hash of the posting text.
 ```
 $ lazyapply requirements data/example/roles/strong-match.txt
 
-Senior Full-Stack Engineer — Meridian Systems
+Senior Full-Stack Engineer — Fintech Platform — Meridian Systems
 role_id   207aace0a6157aff
 
-must-have (6)
-  react        [skill]       Built production web applications with React and TypeScript
-  api_design   [skill]       Designed and evolved APIs, GraphQL or REST
-  nodejs       [skill]       Ran Node.js services in production
-  postgres     [skill]       Modelled data in PostgreSQL
-  realtime     [experience]  Delivered real-time data to the browser
-  performance  [experience]  Delivered measurable performance improvements
+must-have (8)
+  react_production         [skill]       Built production web applications using React
+  typescript               [skill]       Wrote production application code in TypeScript
+  api_design               [skill]       Designed and evolved APIs over time, using GraphQL or REST
+  nodejs_services          [skill]       Built and ran Node.js backend services in production
+  postgres_data_modelling  [skill]       Worked with PostgreSQL and designed data models
+  realtime_browser         [skill]       Delivered real-time data to the browser using WebSockets
+  performance_work         [experience]  Improved application performance with measurable results
+  architecture_ownership   [experience]  Made architectural decisions and owned a major part of a product
 
 nice-to-have (3)
-  fintech       [domain]      Worked on fintech or trading systems
-  event_driven  [experience]  Built event-driven systems with message queues
-  mentoring     [other]       Mentored engineers or led a team
+  fintech_domain       [domain]      Worked on fintech products or trading systems
+  event_driven         [skill]       Worked with event-driven architectures and message queues
+  mentoring_tech_lead  [experience]  Mentored other engineers or acted as a tech lead
 ```
+
+Real output, not illustrative. Three things it got right: compound
+requirements were split (the posting's "React and TypeScript" became two),
+durations were stripped from every query, and `architecture_ownership` was
+pulled from the posting's prose — "expected to make architectural calls, not
+just implement tickets" — rather than only from the bullet list.
 
 **Why two different models.** The pipeline makes two LLM calls, and they are
 not the same kind of work.
