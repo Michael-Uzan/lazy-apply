@@ -2,9 +2,28 @@
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 import pytest
 
+from lazyapply_core.config import REPO_ROOT
 from lazyapply_core.domain import Evidence
+
+EXAMPLE_CACHE = REPO_ROOT / "data/example/cache/roles"
+
+
+@pytest.fixture
+def seeded_cache(tmp_path: Path) -> Path:
+    """A cache directory holding the committed real extractions.
+
+    ``--fake`` swaps in a canned extractor whose requirement ids differ from
+    the real ones, and ``core/evals/golden.yaml`` labels the real ids. Seeding
+    the cache lets a test run the eval path offline against the ids the labels
+    actually refer to.
+    """
+    shutil.copytree(EXAMPLE_CACHE, tmp_path / "roles")
+    return tmp_path
 
 
 @pytest.fixture

@@ -1,0 +1,72 @@
+{
+  "title": "Senior Full-Stack Engineer — Fintech Platform",
+  "company": "Meridian Systems",
+  "requirements": [
+    {
+      "id": "react_production",
+      "text": "Built production web applications using React",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "typescript",
+      "text": "Wrote production application code in TypeScript",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "api_design",
+      "text": "Designed and evolved APIs over time, using GraphQL or REST",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "nodejs_services",
+      "text": "Built and ran Node.js backend services in production",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "postgres_data_modelling",
+      "text": "Worked with PostgreSQL and designed data models for an application",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "realtime_browser",
+      "text": "Delivered real-time data to the browser using WebSockets or a similar technology",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "performance_work",
+      "text": "Improved application performance with measurable results",
+      "kind": "must_have",
+      "category": "experience"
+    },
+    {
+      "id": "architecture_ownership",
+      "text": "Made architectural decisions and owned a major part of a product end to end",
+      "kind": "must_have",
+      "category": "experience"
+    },
+    {
+      "id": "fintech_domain",
+      "text": "Worked on fintech products or trading systems",
+      "kind": "nice_to_have",
+      "category": "domain"
+    },
+    {
+      "id": "event_driven",
+      "text": "Worked with event-driven architectures and message queues",
+      "kind": "nice_to_have",
+      "category": "skill"
+    },
+    {
+      "id": "mentoring_tech_lead",
+      "text": "Mentored other engineers or acted as a tech lead for a team",
+      "kind": "nice_to_have",
+      "category": "experience"
+    }
+  ]
+}

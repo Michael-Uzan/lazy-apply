@@ -1,0 +1,151 @@
+# Hand-labelled ground truth for the two committed example postings.
+#
+# Two labels per requirement, answering two different questions:
+#
+#   relevant:  which evidence blocks SHOULD be retrieved for it. Judged by
+#              reading the blocks, not by running the system. An empty list
+#              means no block in the collection is relevant -- a real label,
+#              not an omission. Those requirements are excluded from recall
+#              and MRR (dividing by an empty set is undefined) and are what
+#              the agreement metric exists to check.
+#
+#   status:    what a person would answer: strong / partial / none. Compared
+#              against claude-haiku-4-5's answer by `lazyapply eval`.
+#
+# This file is the only thing in the project that cannot be regenerated.
+# Everything else -- embeddings, extractions, reports -- is derived.
+
+version: 1
+
+cases:
+  # ---------------------------------------------------------------------
+  # Dana's own field. Expect retrieval to find the right block almost
+  # every time, and the model to agree with a person almost every time.
+  # ---------------------------------------------------------------------
+  - role: strong-match.txt
+    expected_verdict: generate
+    requirements:
+      - id: react_production
+        relevant: [ev_northwind__real-time-trading-dashboard]
+        status: strong
+        note: the only React block in the collection
+
+      - id: typescript
+        relevant: [ev_northwind__real-time-trading-dashboard]
+        status: strong
+
+      - id: api_design
+        relevant: [ev_northwind__graphql-federation-across-four-services]
+        status: strong
+        note: designed the federated schema and the ownership model around it
+
+      - id: nodejs_services
+        relevant:
+          - ev_northwind__graphql-federation-across-four-services
+          - ev_northwind__event-driven-order-pipeline
+        status: strong
+        note: two blocks genuinely qualify; either ranking first is correct
+
+      - id: postgres_data_modelling
+        relevant: [ev_orchid__python-etl-for-clinical-data]
+        status: strong
+        note: >
+          the order pipeline is tagged postgresql but describes idempotent
+          consumers, not data modelling -- deliberately not labelled relevant
+
+      - id: realtime_browser
+        relevant: [ev_northwind__real-time-trading-dashboard]
+        status: strong
+        note: WebSocket gateway feeding the dashboard
+
+      - id: performance_work
+        relevant:
+          - ev_northwind__real-time-trading-dashboard
+          - ev_northwind__event-driven-order-pipeline
+        status: strong
+        note: 4.2s to 900ms, and 18 hours to under a minute
+
+      - id: architecture_ownership
+        relevant:
+          - ev_northwind__graphql-federation-across-four-services
+          - ev_northwind__real-time-trading-dashboard
+        status: strong
+        note: schema ownership model, and owning the migration end to end
+
+      - id: fintech_domain
+        relevant:
+          - ev_northwind__real-time-trading-dashboard
+          - ev_northwind__event-driven-order-pipeline
+        status: strong
+        note: both are trading-firm systems
+
+      - id: event_driven
+        relevant: [ev_northwind__event-driven-order-pipeline]
+        status: strong
+
+      - id: mentoring_tech_lead
+        relevant: [ev_orchid__mentoring-and-code-review-culture]
+        status: strong
+        note: >
+          mentoring is shown; tech lead is not, but the requirement asks for
+          either
+
+  # ---------------------------------------------------------------------
+  # Not her field. No block in the collection is relevant to any of these,
+  # so the honest `relevant` label is empty for all ten. Retrieval will
+  # still return its nearest neighbours -- it has no way to return nothing
+  # -- and declining to call those a match is the model's job.
+  # ---------------------------------------------------------------------
+  - role: bad-match.txt
+    expected_verdict: skip
+    requirements:
+      - id: embedded_c_cpp
+        relevant: []
+        status: none
+
+      - id: arm_cortex_m
+        relevant: []
+        status: none
+
+      - id: rtos
+        relevant: []
+        status: none
+
+      - id: hardware_bringup
+        relevant: []
+        status: none
+
+      - id: lab_instrumentation
+        relevant: []
+        status: none
+
+      - id: medical_regulatory
+        relevant: []
+        status: none
+        note: >
+          the hardest label in the set. Orchid Labs work was clinical trial
+          data, which sounds adjacent, but IEC 62304 governs medical device
+          software -- a different thing. Labelled none deliberately; this is
+          the requirement to watch for a generous model
+
+      - id: safety_critical_lifecycle
+        relevant: []
+        status: none
+
+      - id: ee_ce_degree
+        relevant: []
+        status: partial
+        note: >
+          a hard fact, judged against profile.json rather than retrieval.
+          Dana holds a B.Sc. in Computer Science; the posting asks for
+          electrical or computer engineering. Neither exactly, but CS is
+          genuinely adjacent to CE and most firmware teams would accept it,
+          so partial is the honest human answer rather than none
+
+      - id: dsp_filtering
+        relevant: []
+        status: none
+
+      - id: wireless_telemetry
+        relevant: []
+        status: none

@@ -1,0 +1,66 @@
+{
+  "title": "Senior Embedded Firmware Engineer — Medical Devices",
+  "company": "Caliper Medical",
+  "requirements": [
+    {
+      "id": "embedded_c_cpp",
+      "text": "Developed embedded firmware in C and C++ for production devices",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "arm_cortex_m",
+      "text": "Worked closely with ARM Cortex-M microcontrollers at the register and peripheral level",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "rtos",
+      "text": "Built firmware on top of a real-time operating system, managing tasks, scheduling and timing constraints",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "hardware_bringup",
+      "text": "Performed board bring-up on new hardware and read schematics to debug issues",
+      "kind": "must_have",
+      "category": "experience"
+    },
+    {
+      "id": "lab_instrumentation",
+      "text": "Debugged hardware and firmware using an oscilloscope and logic analyser",
+      "kind": "must_have",
+      "category": "skill"
+    },
+    {
+      "id": "medical_regulatory",
+      "text": "Developed software under medical device regulation such as IEC 62304 or FDA Class III submissions",
+      "kind": "must_have",
+      "category": "domain"
+    },
+    {
+      "id": "safety_critical_lifecycle",
+      "text": "Followed a safety-critical software development lifecycle such as DO-178C, including traceability and verification artifacts",
+      "kind": "must_have",
+      "category": "experience"
+    },
+    {
+      "id": "ee_ce_degree",
+      "text": "Earned a bachelor's degree in electrical engineering or computer engineering",
+      "kind": "must_have",
+      "category": "education"
+    },
+    {
+      "id": "dsp_filtering",
+      "text": "Implemented DSP algorithms and signal filtering on resource-constrained hardware",
+      "kind": "nice_to_have",
+      "category": "skill"
+    },
+    {
+      "id": "wireless_telemetry",
+      "text": "Worked with wireless protocols such as BLE or MICS for device telemetry",
+      "kind": "nice_to_have",
+      "category": "skill"
+    }
+  ]
+}

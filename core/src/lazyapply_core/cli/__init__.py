@@ -9,6 +9,7 @@ from __future__ import annotations
 import typer
 
 from lazyapply_core.cli import embed as embed_cmd
+from lazyapply_core.cli import eval as eval_cmd
 from lazyapply_core.cli import evidence, profile
 from lazyapply_core.cli import fit as fit_cmd
 from lazyapply_core.cli import ingest as ingest_cmd
@@ -30,5 +31,6 @@ app.command("search")(ingest_cmd.search)
 app.command("requirements")(requirements_cmd.requirements)
 app.command("pack")(pack_cmd.pack)
 app.command("fit")(fit_cmd.fit)
+app.command("eval")(eval_cmd.eval_)
 
 __all__ = ["app"]

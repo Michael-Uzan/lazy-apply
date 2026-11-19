@@ -66,20 +66,26 @@ Run against the committed sample data (fictional profile, two job postings):
 uv run lazyapply ingest --data-dir ../data/example
 uv run lazyapply fit    --data-dir ../data/example ../data/example/roles/strong-match.txt
 uv run lazyapply fit    --data-dir ../data/example ../data/example/roles/bad-match.txt
+uv run lazyapply eval   --data-dir ../data/example --sweep
 ```
 
 ## Repository layout
 
 ```
-core/     the RAG engine (Phase 1-2)
-data/     your real evidence — gitignored; data/example/ is the committed sample
-docs/     PRD and design
-api/      Phase 3 — not yet
-web/      Phase 4 — not yet
+core/           the RAG engine (Phase 1-2)
+  evals/        golden.yaml — the hand-labelled ground truth
+data/           your real evidence — gitignored
+  example/      the committed sample: profile, evidence, postings, extractions
+docs/           PRD and design
+api/            Phase 3 — not yet
+web/            Phase 4 — not yet
 ```
 
 Your own career evidence lives in `data/` and never reaches this repository.
-`data/example/` exists so anyone can clone this and run it.
+`data/example/` exists so anyone can clone this and run it — including
+`data/example/cache/`, which holds the two real Opus extractions so
+`lazyapply eval` runs against the requirement ids the labels refer to without
+an API key.
 
 ## Evidence format
 
@@ -398,14 +404,82 @@ directly, there would be nothing to say about this.
 
 ## Measured results
 
-Populated in slice 9-10, from `lazyapply eval` and `lazyapply cost`. Unlike
-the smoke test above, these run against a hand-labelled golden set.
+`lazyapply eval` scores the system against `core/evals/golden.yaml` — 21
+requirements across both example postings, labelled by hand. Two labels per
+requirement: which evidence blocks *should* be retrieved, and what status a
+person would give. The labels are the only thing here that is not derived.
 
-| Metric | Value |
+```
+$ lazyapply eval --sweep
+```
+
+### Retrieval
+
+| k | recall@k | MRR |
+|---|---|---|
+| 1 | 0.818 | 1.000 |
+| 2 | 0.955 | 1.000 |
+| **3** | **0.955** | **1.000** |
+| 4 | 1.000 | 1.000 |
+| 5 | 1.000 | 1.000 |
+
+Scored over the 11 requirements that have a correct answer. The firmware
+posting's 10 are **excluded, not failed** — no block in the collection is
+relevant to any of them, so recall is undefined. Counting them as misses
+would blame retrieval for questions it was never asked.
+
+**MRR is 1.000 at every cutoff**, which is the more interesting number: the
+first relevant block is always ranked first. Recall climbs with k only
+because four requirements have two relevant blocks each, and a narrow window
+can only return one.
+
+So **`top_k` stays at 3**. k=4 buys full recall, and the single block it
+recovers is a second piece of evidence for a requirement already met STRONG
+by the block at rank 1 — no decision changes, and every check pays the extra
+tokens. That is a measured choice rather than the guess it was in slice 1.
+
+The sweep costs one embedding request, not five: a retrieved vector does not
+depend on k, so one pack is scored at every cutoff. On a 3 RPM free tier that
+is the difference between working and waiting.
+
+### Does the model agree with a person?
+
+| Posting | Agreement | Verdict |
+|---|---|---|
+| Full-stack | 11 / 11 | generate — as labelled |
+| Embedded firmware | 9 / 10 | skip — as labelled |
+
+**20 of 21, and the single disagreement is in the safe direction.** The
+posting asks for an electrical or computer engineering degree; Dana holds a
+B.Sc. in Computer Science. I labelled that `partial` — neither degree exactly,
+but adjacent enough that most firmware teams would accept it. Haiku said
+`none`.
+
+Direction matters more than the count. The model was **harsh**, not generous:
+it claimed less than a person would. A harsh model costs opportunities; a
+generous one costs credibility, and an inflated match is undetectable by
+reading the report. Zero generous disagreements across 21 requirements is the
+result worth having.
+
+### The thresholds are still guesses
+
+| Posting | coverage | verdict | distance to nearest boundary |
+|---|---|---|---|
+| Full-stack | 1.000 | generate | 0.200 |
+| Embedded firmware | 0.062 | skip | 0.537 |
+
+`lazyapply eval` reports this and says so itself: no posting lands within 0.1
+of a boundary, so this set **cannot tell whether 0.60 / 0.80 / 70 are the
+right cutoffs**. Both postings are easy cases. Tuning needs a genuinely
+borderline posting — a role Dana half-fits — and the honest answer is that
+two examples cannot do it.
+
+Measuring that the measurement is under-powered beats publishing a swept
+number from two data points.
+
+| Still pending | Slice |
 |---|---|
-| recall@3 | _pending_ |
-| MRR | _pending_ |
-| Cost per fit check | _pending_ |
+| Cost per fit check | 10 |
 
 ## License
 
