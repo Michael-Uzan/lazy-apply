@@ -166,6 +166,55 @@ Three choices worth noting:
 `tags`, `company` and `source_file` carry keyword indexes, so filtered search
 (e.g. evidence from one employer) does not scan the collection.
 
+## Reading a job posting
+
+A posting is prose; the fit engine needs checkable claims. One `claude-opus-5`
+call turns one into the other, cached forever by a hash of the posting text.
+
+```
+$ lazyapply requirements data/example/roles/strong-match.txt
+
+Senior Full-Stack Engineer — Meridian Systems
+role_id   207aace0a6157aff
+
+must-have (6)
+  react        [skill]       Built production web applications with React and TypeScript
+  api_design   [skill]       Designed and evolved APIs, GraphQL or REST
+  nodejs       [skill]       Ran Node.js services in production
+  postgres     [skill]       Modelled data in PostgreSQL
+  realtime     [experience]  Delivered real-time data to the browser
+  performance  [experience]  Delivered measurable performance improvements
+
+nice-to-have (3)
+  fintech       [domain]      Worked on fintech or trading systems
+  event_driven  [experience]  Built event-driven systems with message queues
+  mentoring     [other]       Mentored engineers or led a team
+```
+
+**Why two different models.** The pipeline makes two LLM calls, and they are
+not the same kind of work.
+
+| Step | Input | Output | Model | How often | Cost |
+|---|---|---|---|---|---|
+| **Extraction** (this step) | job posting | requirements | Opus 5 | once per posting, cached | ~$0.05 |
+| **Matching** (slice 8) | requirement + retrieved evidence | STRONG / PARTIAL / NONE | Haiku 4.5 | every check | ~$0.01 |
+
+Extraction reads prose and makes two calls nothing downstream can repair: the
+must-have split (coverage counts must-haves only — reading "fintech a plus" as
+required rejects a good candidate) and restating each requirement as a search
+query ("5+ years with React" → "Built production web applications with React";
+duration is checked against employment dates, not similarity).
+
+Matching is bounded — evidence already found, schema fixed, three possible
+labels — and repeats forever, so it gets the cheap model. Whether Haiku agrees
+with a human is measured in slice 9, not assumed.
+
+**Neither model produces the verdict.** Code turns those labels into coverage
+and a GENERATE / BORDERLINE / SKIP decision.
+
+Validation rejects an extraction with no requirements, duplicate ids, or no
+must-have — coverage divides by that count.
+
 ## Does retrieval actually work?
 
 A smoke test, not an evaluation — six blocks, five queries. Six documents
