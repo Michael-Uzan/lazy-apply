@@ -1,0 +1,18 @@
+Senior Embedded Firmware Engineer — Medical Devices
+Caliper Medical · Haifa (On-site)
+
+About the role
+You will develop firmware for Class III implantable medical devices, working
+close to the silicon and to the regulatory process.
+
+Requirements
+- 5+ years of embedded C/C++ firmware development
+- Deep experience with ARM Cortex-M microcontrollers and RTOS
+- Hardware bring-up, schematic reading, oscilloscope and logic analyser work
+- IEC 62304 / FDA Class III regulatory experience
+- DO-178C or equivalent safety-critical software lifecycle background
+- B.Sc. in Electrical Engineering or Computer Engineering
+
+Nice to have
+- Experience with DSP and signal filtering on constrained hardware
+- Familiarity with wireless protocols for medical telemetry (BLE, MICS)

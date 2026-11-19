@@ -1,0 +1,21 @@
+Senior Full-Stack Engineer — Fintech Platform
+Meridian Systems · Tel Aviv (Hybrid)
+
+About the role
+We are looking for a senior engineer to own the front end of our trading
+platform and the API layer behind it. You will work across a React codebase
+and a set of Node.js services, and you will be expected to make architectural
+calls, not just implement tickets.
+
+Requirements
+- 5+ years building production web applications with React and TypeScript
+- Strong experience designing and evolving APIs (GraphQL or REST)
+- Hands-on with Node.js services in production
+- Comfortable with PostgreSQL and data modelling
+- Experience with real-time data in the browser (WebSockets or similar)
+- Track record of measurable performance work
+
+Nice to have
+- Experience in fintech or trading systems
+- Exposure to event-driven architectures and message queues
+- Mentoring or tech-lead experience

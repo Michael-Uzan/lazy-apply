@@ -1,0 +1,21 @@
+# Real career data stays off GitHub. data/example/ is the committed, runnable sample.
+/data/*
+!/data/example/
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local caches written by the app
+.cache/
+
+# macOS
+.DS_Store

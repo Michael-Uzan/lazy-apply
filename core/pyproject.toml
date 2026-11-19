@@ -1,0 +1,48 @@
+[project]
+name = "lazyapply-core"
+version = "0.1.0"
+description = "Grounded RAG fit engine for Lazy Apply"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pydantic[email]>=2.9",
+    "pydantic-settings>=2.6",
+    "typer>=0.15",
+    "anthropic>=0.69",
+    "voyageai>=0.3",
+    "qdrant-client>=1.12",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+lazyapply = "lazyapply_core.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "types-pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lazyapply_core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/lazyapply_core"]

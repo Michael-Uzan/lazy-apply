@@ -1,0 +1,35 @@
+{
+  "name": "Dana Levi",
+  "headline": "Full-Stack & AI Engineer",
+  "location": "Tel Aviv, Israel",
+  "email": "dana.levi@example.com",
+  "links": [
+    { "label": "GitHub", "url": "https://github.com/example-dana" },
+    { "label": "LinkedIn", "url": "https://linkedin.com/in/example-dana" }
+  ],
+  "education": [
+    {
+      "degree": "B.Sc. Computer Science",
+      "institution": "Technion",
+      "graduated": "2018-06"
+    }
+  ],
+  "positions": [
+    {
+      "company": "Northwind Trading",
+      "title": "Senior Full-Stack Engineer",
+      "start": "2022-03",
+      "end": "present"
+    },
+    {
+      "company": "Orchid Labs",
+      "title": "Software Engineer",
+      "start": "2018-09",
+      "end": "2022-02"
+    }
+  ],
+  "stack": [
+    "TypeScript", "React", "Node.js", "Python", "PostgreSQL",
+    "GraphQL", "Docker", "AWS"
+  ]
+}
