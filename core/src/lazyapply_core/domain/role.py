@@ -17,6 +17,16 @@ class RequirementKind(StrEnum):
     MUST_HAVE = "must_have"
     NICE_TO_HAVE = "nice_to_have"
 
+    @property
+    def label(self) -> str:
+        """How this reads to a person: "must-have", "nice-to-have".
+
+        Defined once, on the type. Four modules used to format it themselves
+        and one of them compared the result back against a literal, which
+        would have broken silently the moment any of them was reworded.
+        """
+        return self.value.replace("_", "-")
+
 
 class RequirementCategory(StrEnum):
     SKILL = "skill"

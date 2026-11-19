@@ -1,7 +1,8 @@
 """Turning a Profile and an EvidencePack into prompt text.
 
-Separate from ``prompts.py`` -- that file holds instructions, this one holds
-the logic that lays out the data, and it is the part worth unit-testing.
+Separate from ``prompts.py`` -- that file holds every piece of text the model
+reads, this one holds the logic that lays the data out, and the logic is the
+part worth unit-testing.
 
 Two layout decisions carry weight:
 
@@ -15,10 +16,8 @@ Two layout decisions carry weight:
 
 from __future__ import annotations
 
-from lazyapply_core.domain import EvidencePack, Profile, RequirementKind
-
-NOTHING_RETRIEVED = "nothing retrieved — judge this NONE unless the facts above cover it"
-HARD_FACT = "hard fact — judge against <facts>, cite no evidence"
+from lazyapply_core.domain import EvidencePack, Profile
+from lazyapply_core.evaluate.prompts import HARD_FACT, NOTHING_RETRIEVED
 
 
 def render_facts(profile: Profile) -> str:
@@ -67,8 +66,7 @@ def _requirements(pack: EvidencePack) -> str:
     lines = []
     for item in pack.items:
         requirement = item.requirement
-        kind = "must-have" if requirement.kind is RequirementKind.MUST_HAVE else "nice-to-have"
-        lines.append(f"{requirement.id} [{kind}] {requirement.text}")
+        lines.append(f"{requirement.id} [{requirement.kind.label}] {requirement.text}")
 
         if requirement.is_hard_fact:
             lines.append(f"  {HARD_FACT}")

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from lazyapply_core.domain import Requirement, Role
+from lazyapply_core.domain import Requirement, RequirementKind, Role
 from lazyapply_core.hashing import content_hash, normalize
 from lazyapply_core.retrieve.base import ExtractionError, Extractor
 from lazyapply_core.retrieve.schema import ExtractedRole
@@ -75,7 +75,7 @@ def _validate(extracted: ExtractedRole) -> None:
 
     # Coverage divides by the must-have count, so zero would be undefined --
     # and a posting with no hard requirement is a misread, not a real role.
-    if not any(r.kind.value == "must_have" for r in extracted.requirements):
+    if not any(r.kind is RequirementKind.MUST_HAVE for r in extracted.requirements):
         raise ExtractionError("extraction found no must-have requirements")
 
 

@@ -40,8 +40,25 @@ InMemory = Annotated[
 ]
 
 
+_ROLE_CACHE_SUBDIR = "roles"
+
+
 def settings_for(data_dir: Path | None) -> Settings:
     return load_settings(data_dir)
+
+
+def cache_root(settings: Settings, cache_dir: Path | None) -> Path:
+    """The cache directory, honouring ``--cache-dir``."""
+    return cache_dir or settings.cache_dir
+
+
+def role_cache(settings: Settings, cache_dir: Path | None) -> Path:
+    """Where cached requirement extractions live.
+
+    Three commands need this path and all three must agree: a mismatch would
+    silently pay Opus again for a posting already extracted.
+    """
+    return cache_root(settings, cache_dir) / _ROLE_CACHE_SUBDIR
 
 
 def abort(message: str) -> typer.Exit:

@@ -12,8 +12,15 @@ from typing import Annotated
 
 import typer
 
-from lazyapply_core.cli._shared import CacheDir, DataDir, Fake, abort, settings_for
-from lazyapply_core.domain import Role
+from lazyapply_core.cli._shared import (
+    CacheDir,
+    DataDir,
+    Fake,
+    abort,
+    role_cache,
+    settings_for,
+)
+from lazyapply_core.domain import RequirementKind, Role
 from lazyapply_core.retrieve import ExtractionError, build_extractor, extract_role
 
 RoleFile = Annotated[Path, typer.Argument(help="Plain-text job posting.")]
@@ -35,7 +42,7 @@ def requirements(
         role = extract_role(
             role_file.read_text(),
             extractor=build_extractor(settings, fake=fake),
-            cache_dir=(cache_dir or settings.cache_dir) / "roles",
+            cache_dir=role_cache(settings, cache_dir),
         )
     except ExtractionError as exc:
         raise abort(str(exc)) from exc
@@ -48,10 +55,14 @@ def _print(role: Role) -> None:
     typer.echo(header)
     typer.echo(f"role_id   {role.role_id}\n")
 
-    for label, group in (("must-have", role.must_haves), ("nice-to-have", role.nice_to_haves)):
+    groups = (
+        (RequirementKind.MUST_HAVE, role.must_haves),
+        (RequirementKind.NICE_TO_HAVE, role.nice_to_haves),
+    )
+    for kind, group in groups:
         if not group:
             continue
-        typer.echo(f"{label} ({len(group)})")
+        typer.echo(f"{kind.label} ({len(group)})")
         width = max(len(r.id) for r in group)
         for item in group:
             typer.echo(f"  {item.id:<{width}}  [{item.category.value}]  {item.text}")

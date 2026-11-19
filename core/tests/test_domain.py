@@ -2,17 +2,19 @@ import json
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from lazyapply_core.config import REPO_ROOT
 from lazyapply_core.domain import (
     Evidence,
+    EvidenceId,
     Profile,
     Requirement,
     RequirementCategory,
     RequirementKind,
     Role,
     ScoredEvidence,
+    make_evidence_id,
 )
 
 
@@ -108,3 +110,38 @@ class TestScoredEvidence:
     ) -> None:
         with pytest.raises(ValidationError):
             self._scored(evidence, bad_score)
+
+
+class TestRequirementKindLabel:
+    """One display label, defined once.
+
+    Four modules were formatting this independently -- two identical
+    ternaries, a ``.replace("_", "-")``, and a literal pair -- and one of them
+    then compared a formatted label back against a string literal to count
+    unmet must-haves. That comparison would have broken silently if any of the
+    four had been reworded.
+    """
+
+    def test_must_have_reads_as_prose(self) -> None:
+        assert RequirementKind.MUST_HAVE.label == "must-have"
+
+    def test_nice_to_have_reads_as_prose(self) -> None:
+        assert RequirementKind.NICE_TO_HAVE.label == "nice-to-have"
+
+    def test_every_kind_has_one(self) -> None:
+        """A new kind must not silently render as a raw enum value."""
+        assert all("_" not in kind.label for kind in RequirementKind)
+
+
+class TestMakeEvidenceId:
+    """The id format has one definition, shared with the pattern that validates it."""
+
+    def test_joins_the_file_and_title_slugs(self) -> None:
+        assert make_evidence_id("leverate", "multi-agent-orchestration") == (
+            "ev_leverate__multi-agent-orchestration"
+        )
+
+    def test_the_result_satisfies_the_evidence_id_pattern(self) -> None:
+        """Format and validation drifting apart is the failure this guards."""
+        built = make_evidence_id("northwind", "trading-dashboard")
+        assert TypeAdapter(EvidenceId).validate_python(built) == built

@@ -14,9 +14,18 @@ from typing import Annotated
 
 import typer
 
-from lazyapply_core.cli._shared import CacheDir, DataDir, Fake, InMemory, abort, settings_for
+from lazyapply_core.cli._shared import (
+    CacheDir,
+    DataDir,
+    Fake,
+    InMemory,
+    abort,
+    cache_root,
+    role_cache,
+    settings_for,
+)
 from lazyapply_core.config import Settings
-from lazyapply_core.domain import FitReport, MatchStatus, Role, Verdict
+from lazyapply_core.domain import FitReport, RequirementKind, Role, Verdict
 from lazyapply_core.embed import build_embedder
 from lazyapply_core.embed.base import EmbeddingError
 from lazyapply_core.evaluate import CitationError, EvaluationError, build_evaluator, evaluate_fit
@@ -33,6 +42,12 @@ JsonOut = Annotated[
     Path | None,
     typer.Option("--json-out", help="Also write the report as JSON, for Phase 2's CV agent."),
 ]
+
+_STATUS_WIDTH = 8
+"""Pads the status column so requirement ids line up beneath each other."""
+
+_INDENT = " " * 10
+"""Aligns rationales and citations under their requirement."""
 
 _COLOUR = {
     Verdict.GENERATE: typer.colors.GREEN,
@@ -92,7 +107,7 @@ def _run(
     fake: bool,
     in_memory: bool,
 ) -> tuple[Role, FitReport]:
-    cache = cache_dir or settings.cache_dir
+    cache = cache_root(settings, cache_dir)
 
     profile = load_profile(settings.profile_path)
     embedder = build_embedder(settings, fake=fake, cache_dir=cache)
@@ -103,7 +118,7 @@ def _run(
     role = extract_role(
         role_file.read_text(),
         extractor=build_extractor(settings, fake=fake),
-        cache_dir=cache / "roles",
+        cache_dir=role_cache(settings, cache_dir),
     )
     pack = build_pack(role, embedder=embedder, store=store, top_k=top_k)
 
@@ -126,18 +141,18 @@ def _print(role: Role, report: FitReport) -> None:
     typer.echo(f"coverage  {report.must_have_coverage:.0%} of must-haves (partials count half)")
     typer.echo(f"score     {report.score}/100\n")
 
-    kinds = {r.id: r.kind.value.replace("_", "-") for r in role.requirements}
+    kinds = {r.id: r.kind for r in role.requirements}
     for match in report.matches:
         kind = kinds[match.requirement_id]
-        typer.echo(f"{match.status.value:<8}  {match.requirement_id}  [{kind}]")
-        typer.echo(f"          {match.rationale}")
+        typer.echo(f"{match.status.value:<{_STATUS_WIDTH}}  {match.requirement_id}  [{kind.label}]")
+        typer.echo(f"{_INDENT}{match.rationale}")
         for evidence_id in match.evidence_ids:
-            typer.echo(f"          → {evidence_id}")
+            typer.echo(f"{_INDENT}→ {evidence_id}")
 
     _print_gaps(report, kinds)
 
 
-def _print_gaps(report: FitReport, kinds: dict[str, str]) -> None:
+def _print_gaps(report: FitReport, kinds: dict[str, RequirementKind]) -> None:
     if not report.gaps:
         typer.echo("\nNo unmet requirements.")
         return
@@ -147,12 +162,10 @@ def _print_gaps(report: FitReport, kinds: dict[str, str]) -> None:
     typer.echo("")
     typer.secho(f"Gaps ({len(report.gaps)}):", bold=True)
     for requirement_id in report.gaps:
-        typer.echo(f"  - {requirement_id} [{kinds[requirement_id]}]")
+        typer.echo(f"  - {requirement_id} [{kinds[requirement_id].label}]")
 
-    unmet_must_haves = sum(
-        1
-        for m in report.matches
-        if m.status is MatchStatus.NONE and kinds[m.requirement_id] == "must-have"
-    )
-    if unmet_must_haves:
-        typer.echo(f"\n{unmet_must_haves} must-have(s) unmet.")
+    # Counted off the enum, not off the printed label. Comparing display text
+    # would break silently the moment the label was reworded.
+    unmet = sum(1 for rid in report.gaps if kinds[rid] is RequirementKind.MUST_HAVE)
+    if unmet:
+        typer.echo(f"\n{unmet} must-have(s) unmet.")

@@ -18,6 +18,18 @@ DEFAULT_DIMENSIONS = 512
 #: Voyage accepts up to 128 texts per request.
 DEFAULT_BATCH_SIZE = 128
 
+DOCUMENT = "document"
+"""Embeds text as something to be found."""
+
+QUERY = "query"
+"""Embeds text as something doing the finding.
+
+Voyage is an asymmetric model: the same sentence embeds differently depending
+on which side of the search it is on. A terse requirement ("Built production
+React applications") and a paragraph-long impact story are not the same shape
+of text, and telling the model which is which is free accuracy. Getting this
+backwards costs retrieval quality silently -- nothing errors."""
+
 
 class VoyageEmbedder:
     """Embedder backed by the Voyage API."""
@@ -53,7 +65,7 @@ class VoyageEmbedder:
     def embed_documents(self, texts: Sequence[str]) -> tuple[Vector, ...]:
         vectors: list[Vector] = []
         for batch in _batched(texts, self._batch_size):
-            vectors.extend(self._embed(batch, input_type="document"))
+            vectors.extend(self._embed(batch, input_type=DOCUMENT))
         return tuple(vectors)
 
     def embed_query(self, text: str) -> Vector:
@@ -62,7 +74,7 @@ class VoyageEmbedder:
     def embed_queries(self, texts: Sequence[str]) -> tuple[Vector, ...]:
         vectors: list[Vector] = []
         for batch in _batched(texts, self._batch_size):
-            vectors.extend(self._embed(batch, input_type="query"))
+            vectors.extend(self._embed(batch, input_type=QUERY))
         return tuple(vectors)
 
     def _embed(self, texts: Sequence[str], *, input_type: str) -> tuple[Vector, ...]:

@@ -19,6 +19,11 @@ from lazyapply_core.evaluate.schema import Judgment
 
 DEFAULT_MODEL = "claude-haiku-4-5"
 
+MAX_OUTPUT_TOKENS = 4000
+"""One status, a few ids and one sentence per requirement. Smaller than
+extraction's ceiling because the output is bounded by the requirement count,
+and this call runs on every fit check."""
+
 
 class ClaudeEvaluator:
     def __init__(
@@ -42,7 +47,7 @@ class ClaudeEvaluator:
         try:
             response = self._client.messages.parse(
                 model=self._model,
-                max_tokens=4000,
+                max_tokens=MAX_OUTPUT_TOKENS,
                 system=MATCHING_SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
                 output_format=Judgment,

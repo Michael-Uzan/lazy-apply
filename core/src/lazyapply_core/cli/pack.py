@@ -12,8 +12,17 @@ from typing import Annotated
 
 import typer
 
-from lazyapply_core.cli._shared import CacheDir, DataDir, Fake, InMemory, abort, settings_for
-from lazyapply_core.domain import EvidencePack, RequirementKind
+from lazyapply_core.cli._shared import (
+    CacheDir,
+    DataDir,
+    Fake,
+    InMemory,
+    abort,
+    cache_root,
+    role_cache,
+    settings_for,
+)
+from lazyapply_core.domain import EvidencePack
 from lazyapply_core.embed import build_embedder
 from lazyapply_core.embed.base import EmbeddingError
 from lazyapply_core.ingest.parser import ParseError
@@ -36,7 +45,7 @@ def pack(
 ) -> None:
     """Retrieve candidate evidence for every requirement in a posting."""
     settings = settings_for(data_dir)
-    cache = cache_dir or settings.cache_dir
+    cache = cache_root(settings, cache_dir)
 
     if not role_file.is_file():
         raise abort(f"role file not found: {role_file}")
@@ -50,7 +59,7 @@ def pack(
         role = extract_role(
             role_file.read_text(),
             extractor=build_extractor(settings, fake=fake),
-            cache_dir=cache / "roles",
+            cache_dir=role_cache(settings, cache_dir),
         )
         evidence_pack = build_pack(role, embedder=embedder, store=store, top_k=top_k)
     except (ParseError, ExtractionError, EmbeddingError, ValueError) as exc:
@@ -62,8 +71,8 @@ def pack(
 
 def _print(evidence_pack: EvidencePack) -> None:
     for item in evidence_pack.items:
-        kind = "must-have" if item.requirement.kind is RequirementKind.MUST_HAVE else "nice-to-have"
-        typer.echo(f"{item.requirement.id}  [{kind}]  {item.requirement.text}")
+        requirement = item.requirement
+        typer.echo(f"{requirement.id}  [{requirement.kind.label}]  {requirement.text}")
 
         if not item.hits:
             typer.echo("    (nothing retrieved)")

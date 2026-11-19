@@ -15,6 +15,11 @@ from lazyapply_core.retrieve.schema import ExtractedRole
 
 DEFAULT_MODEL = "claude-opus-5"
 
+MAX_OUTPUT_TOKENS = 8000
+"""Headroom for a long posting: 12 requirements with restated text and ids.
+Generous because truncation here loses requirements silently -- the schema
+would still validate, just with fewer entries than the posting has."""
+
 
 class ClaudeExtractor:
     def __init__(
@@ -36,7 +41,7 @@ class ClaudeExtractor:
         try:
             response = self._client.messages.parse(
                 model=self._model,
-                max_tokens=8000,
+                max_tokens=MAX_OUTPUT_TOKENS,
                 system=EXTRACTION_SYSTEM,
                 messages=[{"role": "user", "content": EXTRACTION_USER.format(role_text=role_text)}],
                 output_format=ExtractedRole,

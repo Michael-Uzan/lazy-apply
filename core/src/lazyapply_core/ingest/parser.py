@@ -29,7 +29,7 @@ from typing import Any
 import yaml
 from pydantic import TypeAdapter, ValidationError
 
-from lazyapply_core.domain import EndDate, Evidence, YearMonth
+from lazyapply_core.domain import EndDate, Evidence, YearMonth, make_evidence_id
 from lazyapply_core.hashing import content_hash
 from lazyapply_core.ingest.slug import slugify
 
@@ -114,7 +114,7 @@ def _build(
     composed = _compose(company=company, title=title, tags=tags, prose=prose)
 
     return Evidence(
-        evidence_id=f"ev_{file_slug}__{title_slug}",
+        evidence_id=make_evidence_id(file_slug, title_slug),
         title=title,
         body=prose,
         composed_text=composed,

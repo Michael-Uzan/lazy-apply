@@ -10,6 +10,7 @@ from lazyapply_core.domain.evidence import (
     EvidenceId,
     ScoredEvidence,
     YearMonth,
+    make_evidence_id,
 )
 from lazyapply_core.domain.fit import (
     FitReport,
@@ -46,4 +47,5 @@ __all__ = [
     "ScoredEvidence",
     "Verdict",
     "YearMonth",
+    "make_evidence_id",
 ]

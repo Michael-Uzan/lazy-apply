@@ -23,7 +23,19 @@ _SCORE_TOLERANCE = 1e-9
 
 #: Readable citation anchor, e.g. "ev_leverate__multi-agent-llm-orchestration".
 _SLUG = r"[a-z0-9]+(?:-[a-z0-9]+)*"
-EvidenceId = Annotated[str, StringConstraints(pattern=rf"^ev_{_SLUG}__{_SLUG}$")]
+_PREFIX = "ev"
+_SEPARATOR = "__"
+EvidenceId = Annotated[str, StringConstraints(pattern=rf"^{_PREFIX}_{_SLUG}{_SEPARATOR}{_SLUG}$")]
+
+
+def make_evidence_id(file_slug: str, title_slug: str) -> str:
+    """Build an evidence id from a file name and a block title.
+
+    Lives beside the pattern that validates it, built from the same pieces.
+    The format was previously written out in the parser and matched by a regex
+    here; two definitions of one format drift apart eventually.
+    """
+    return f"{_PREFIX}_{file_slug}{_SEPARATOR}{title_slug}"
 
 
 class Evidence(BaseModel):

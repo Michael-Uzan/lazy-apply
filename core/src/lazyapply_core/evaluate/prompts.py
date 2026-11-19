@@ -12,6 +12,14 @@ cannot detect by reading the report. Hence the explicit permission to answer
 NONE.
 """
 
+NOTHING_RETRIEVED = "nothing retrieved — judge this NONE unless the facts above cover it"
+"""Shown instead of a candidate list when a requirement retrieved nothing.
+Absence has to be stated in words -- a blank line is something a model skims
+past, and an unmet requirement is the signal the verdict is built on."""
+
+HARD_FACT = "hard fact — judge against <facts>, cite no evidence"
+"""Shown for requirements routed past retrieval. See ``Requirement.is_hard_fact``."""
+
 MATCHING_SYSTEM = """\
 You judge whether a candidate's evidence satisfies each requirement of a job \
 posting. You do not decide whether they should apply -- that decision is \
