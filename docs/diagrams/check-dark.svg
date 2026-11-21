@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="700" viewBox="0 0 1040 700" role="img" aria-label="Check diagram. role.txt is sent to Claude Opus 5 which returns a requirement list. Each requirement is embedded by Voyage and searched against Qdrant to build an EvidencePack. The pack plus profile.json go to Claude Haiku 4.5 which returns a status per requirement. Our code then verifies citations and computes the verdict, producing a FitReport."><style>
+  .n-title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; fill: #E7ECEA; }
+  .n-sub   { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; fill: #97A4A7; }
+  .n-band  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; letter-spacing: 0.12em; fill: #6E7C80; }
+  .n-edge  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10.5px; fill: #97A4A7; }
+  .n-data  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; fill: #E7ECEA; }
+  .n-box   { fill: #1B2327; stroke: #2C373B; stroke-width: 1; }
+  .n-flow  { stroke: #2C373B; stroke-width: 1.5; fill: none; }
+</style><rect width="100%" height="100%" fill="#151B1E"/>
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2C373B"></path>
+        </marker>
+        <marker id="a2l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#B49BF0"></path>
+        </marker>
+        <marker id="a2e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#6FA6F5"></path>
+        </marker>
+        <marker id="a2s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2DD4BF"></path>
+        </marker>
+        <marker id="a2f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#F3A74B"></path>
+        </marker>
+      </defs>
+
+      <!-- EXTERNAL BOX -->
+      <rect x="40" y="40" width="960" height="124" rx="4"
+            fill="none" stroke="#B49BF0" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.75"></rect>
+      <text class="n-band" x="58" y="62" fill="#B49BF0">EXTERNAL APIs  ·  METERED  ·  OUTSIDE OUR CODE</text>
+
+      <g>
+        <rect class="n-box" x="80" y="76" width="250" height="62" rx="3"></rect>
+        <rect x="80" y="76" width="3" height="62" fill="#B49BF0"></rect>
+        <text class="n-title" x="98" y="102">Claude Opus 5</text>
+        <text class="n-sub"   x="98" y="122">decompose · $0.0241 · cached</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="395" y="76" width="250" height="62" rx="3"></rect>
+        <rect x="395" y="76" width="3" height="62" fill="#6FA6F5"></rect>
+        <text class="n-title" x="413" y="102">Voyage · voyage-3-lite</text>
+        <text class="n-sub"   x="413" y="122">embed query · 11 in 1 request</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="710" y="76" width="250" height="62" rx="3"></rect>
+        <rect x="710" y="76" width="3" height="62" fill="#B49BF0"></rect>
+        <text class="n-title" x="728" y="102">Claude Haiku 4.5</text>
+        <text class="n-sub"   x="728" y="122">judge · $0.0067 · every check</text>
+      </g>
+
+      <!-- OUR PIPELINE ROW -->
+      <g>
+        <rect class="n-box" x="40" y="270" width="160" height="68" rx="3"></rect>
+        <rect x="40" y="270" width="3" height="68" fill="#9BAEB8"></rect>
+        <text class="n-title" x="56" y="298">role.txt</text>
+        <text class="n-sub"   x="56" y="318">the job posting</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="238" y="270" width="160" height="68" rx="3"></rect>
+        <rect x="238" y="270" width="3" height="68" fill="#B49BF0"></rect>
+        <text class="n-title" x="254" y="298">Requirement[]</text>
+        <text class="n-sub"   x="254" y="318">8 must · 3 nice</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="436" y="270" width="160" height="68" rx="3"></rect>
+        <rect x="436" y="270" width="3" height="68" fill="#2DD4BF"></rect>
+        <text class="n-title" x="452" y="298">Search, per req</text>
+        <text class="n-sub"   x="452" y="318">top-3 each</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="634" y="270" width="160" height="68" rx="3"></rect>
+        <rect x="634" y="270" width="3" height="68" fill="#9BAEB8"></rect>
+        <text class="n-title" x="650" y="298">EvidencePack</text>
+        <text class="n-sub"   x="650" y="318">11 reqs → 6 blocks</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="832" y="270" width="160" height="68" rx="3"></rect>
+        <rect x="832" y="270" width="3" height="68" fill="#B49BF0"></rect>
+        <text class="n-title" x="848" y="298">Judged[]</text>
+        <text class="n-sub"   x="848" y="318">strong·partial·none</text>
+      </g>
+
+      <path class="n-flow" d="M200,304 L236,304" marker-end="url(#a2)"></path>
+      <path class="n-flow" d="M398,304 L434,304" marker-end="url(#a2)"></path>
+      <path class="n-flow" d="M596,304 L632,304" marker-end="url(#a2)"></path>
+      <path class="n-flow" d="M794,304 L830,304" marker-end="url(#a2)"></path>
+
+      <!-- call arrows: out and back -->
+      <path d="M120,268 L120,210 L165,210 L165,140" stroke="#B49BF0" stroke-width="1.5" fill="none" marker-end="url(#a2l)"></path>
+      <path d="M245,140 L245,238 L300,238 L300,268" stroke="#B49BF0" stroke-width="1.5" fill="none" marker-end="url(#a2l)"></path>
+
+      <path d="M495,268 L495,210 L460,210 L460,140" stroke="#6FA6F5" stroke-width="1.5" fill="none" marker-end="url(#a2e)"></path>
+      <path d="M530,140 L530,238 L545,238 L545,268" stroke="#6FA6F5" stroke-width="1.5" fill="none" marker-end="url(#a2e)"></path>
+
+      <path d="M700,268 L700,210 L775,210 L775,140" stroke="#B49BF0" stroke-width="1.5" fill="none" marker-end="url(#a2l)"></path>
+      <path d="M845,140 L845,238 L890,238 L890,268" stroke="#B49BF0" stroke-width="1.5" fill="none" marker-end="url(#a2l)"></path>
+
+      <text class="n-edge" x="122" y="200" fill="#B49BF0">posting text</text>
+      <text class="n-edge" x="462" y="200" fill="#6FA6F5">11 strings</text>
+      <text class="n-edge" x="640" y="200" fill="#B49BF0">pack + facts</text>
+
+      <!-- Qdrant -->
+      <g>
+        <path d="M400,420 L400,478 a116,15 0 0 0 232,0 L632,420 z" fill="#1B2327" stroke="#2DD4BF" stroke-width="1.5"></path>
+        <ellipse cx="516" cy="420" rx="116" ry="15" fill="#1B2327" stroke="#2DD4BF" stroke-width="1.5"></ellipse>
+        <text class="n-title" x="516" y="449" text-anchor="middle">Qdrant · evidence_v1</text>
+        <text class="n-sub"   x="516" y="468" text-anchor="middle">cosine · top-3</text>
+      </g>
+      <path d="M516,340 L516,403" stroke="#2DD4BF" stroke-width="1.5" fill="none"
+            marker-start="url(#a2s)" marker-end="url(#a2s)"></path>
+
+      <!-- profile.json, bypassing everything -->
+      <g>
+        <rect x="654" y="420" width="160" height="68" rx="3" fill="#1B2327" stroke="#F3A74B" stroke-width="1.5"></rect>
+        <rect x="654" y="420" width="3" height="68" fill="#F3A74B"></rect>
+        <text class="n-title" x="670" y="448">data/profile.json</text>
+        <text class="n-sub"   x="670" y="468">hard facts, verbatim</text>
+      </g>
+      <path d="M814,454 L1012,454 L1012,186 L940,186 L940,142"
+            stroke="#F3A74B" stroke-width="1.5" fill="none" marker-end="url(#a2f)"></path>
+      <text class="n-edge" x="700" y="508" fill="#F3A74B">never embedded · never searched</text>
+
+      <!-- FINAL ROW : our pure code -->
+      <path class="n-flow" d="M912,340 L912,528 L318,528 L318,556" marker-end="url(#a2)"></path>
+
+      <g>
+        <rect class="n-box" x="238" y="558" width="160" height="68" rx="3"></rect>
+        <rect x="238" y="558" width="3" height="68" fill="#9BAEB8"></rect>
+        <text class="n-title" x="254" y="586">Verify citations</text>
+        <text class="n-sub"   x="254" y="606">bad id → hard fail</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="436" y="558" width="160" height="68" rx="3"></rect>
+        <rect x="436" y="558" width="3" height="68" fill="#9BAEB8"></rect>
+        <text class="n-title" x="452" y="586">verdict()</text>
+        <text class="n-sub"   x="452" y="606">pure · no model</text>
+      </g>
+
+      <path class="n-flow" d="M398,592 L434,592" marker-end="url(#a2)"></path>
+      <path class="n-flow" d="M596,592 L632,592" marker-end="url(#a2)"></path>
+
+      <g>
+        <rect x="634" y="546" width="358" height="92" rx="3" fill="#1B2327" stroke="#2C373B" stroke-width="1.5"></rect>
+        <text class="n-title" x="813" y="574" text-anchor="middle">FitReport</text>
+        <rect x="652" y="590" width="104" height="28" rx="2" fill="none" stroke="#4ADE80"></rect>
+        <text x="704" y="609" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#4ADE80">GENERATE</text>
+        <rect x="770" y="590" width="104" height="28" rx="2" fill="none" stroke="#F0C14B"></rect>
+        <text x="822" y="609" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#F0C14B">BORDERLINE</text>
+        <rect x="888" y="590" width="104" height="28" rx="2" fill="none" stroke="#F07A6E"></rect>
+        <text x="940" y="609" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" fill="#F07A6E">SKIP</text>
+      </g>
+
+      <text class="n-band" x="40" y="676">OUR CODE OWNS THE DECISION  ·  THE MODEL ONLY LABELS</text>
+    </svg>

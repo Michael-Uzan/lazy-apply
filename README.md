@@ -24,18 +24,36 @@ is built the other way around:
 
 ## How it works
 
-```
-role.txt
-  └─ extract requirements        (claude-opus-5, cached by role hash)
-       └─ per requirement: retrieve top-3 evidence   (Qdrant + Voyage embeddings)
-            └─ judge each requirement                (claude-haiku-4-5)
-                 └─ verify citations → compute verdict
-                      └─ FitReport: GENERATE | BORDERLINE | SKIP
-```
+Two stages. The first runs once, when you change what you've written. The
+second runs every time you check a role.
+
+Everything inside the dashed box is a metered third-party call; everything
+outside it is code in this repository.
+
+### ① Setup — building the profile
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/setup-dark.svg">
+  <img alt="Evidence markdown files are parsed into blocks, composed into text, sent to the Voyage API which returns a 512-float vector, and stored in Qdrant. Separately, profile.json is validated and kept verbatim on disk, never embedded." src="docs/diagrams/setup-light.svg">
+</picture>
+
+### ② Check — a posting through the pipeline
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/check-dark.svg">
+  <img alt="role.txt goes to Claude Opus 5 which returns a requirement list. Each requirement is embedded by Voyage and searched against Qdrant to build an EvidencePack. The pack plus profile.json go to Claude Haiku 4.5, which returns a status per requirement. Our own code then verifies the citations and computes the verdict, producing a FitReport." src="docs/diagrams/check-light.svg">
+</picture>
 
 Retrieval decides *candidacy* — what evidence exists at all. The model decides
 *sufficiency* — whether that evidence satisfies the requirement. Code owns the
 verdict.
+
+Note where `profile.json` enters the second diagram: on the far right, past
+the whole retrieval pipeline, straight into the judgement. Hard facts are
+never embedded and never searched.
+
+<sub>Diagrams are generated — edit `docs/diagrams/{setup,check}.svg` and run
+`python docs/diagrams/build.py` to rebuild both themes.</sub>
 
 ## Stack
 

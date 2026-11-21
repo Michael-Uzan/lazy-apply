@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="620" viewBox="0 0 1040 620" role="img" aria-label="Setup diagram. Evidence markdown files are parsed into blocks, composed into text, sent to the external Voyage API which returns a 512-float vector, and stored in Qdrant. Separately, profile.json is validated and kept verbatim on disk, never embedded."><style>
+  .n-title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; fill: #E7ECEA; }
+  .n-sub   { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; fill: #97A4A7; }
+  .n-band  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; letter-spacing: 0.12em; fill: #6E7C80; }
+  .n-edge  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10.5px; fill: #97A4A7; }
+  .n-data  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; fill: #E7ECEA; }
+  .n-box   { fill: #1B2327; stroke: #2C373B; stroke-width: 1; }
+  .n-flow  { stroke: #2C373B; stroke-width: 1.5; fill: none; }
+</style><rect width="100%" height="100%" fill="#151B1E"/>
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2C373B"></path>
+        </marker>
+        <marker id="a1e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#6FA6F5"></path>
+        </marker>
+        <marker id="a1f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#F3A74B"></path>
+        </marker>
+      </defs>
+
+      <!-- external boundary -->
+      <rect x="716" y="44" width="292" height="128" rx="4"
+            fill="none" stroke="#B49BF0" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.75"></rect>
+      <text class="n-band" x="736" y="68" fill="#B49BF0">EXTERNAL API</text>
+
+      <g>
+        <rect class="n-box" x="736" y="84" width="252" height="66" rx="3"></rect>
+        <rect x="736" y="84" width="3" height="66" fill="#6FA6F5"></rect>
+        <text class="n-title" x="754" y="112">Voyage · voyage-3-lite</text>
+        <text class="n-sub"   x="754" y="132">embed · input_type: document</text>
+      </g>
+
+      <!-- band 1 label -->
+      <text class="n-band" x="40" y="36">SOFT EVIDENCE  ·  WHAT YOU ACTUALLY DID</text>
+      <line x1="40" y1="46" x2="690" y2="46" stroke="#232D31"></line>
+
+      <g>
+        <rect class="n-box" x="40" y="84" width="185" height="66" rx="3"></rect>
+        <rect x="40" y="84" width="3" height="66" fill="#2DD4BF"></rect>
+        <text class="n-title" x="58" y="112">data/evidence/*.md</text>
+        <text class="n-sub"   x="58" y="132">6 hand-written blocks</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="265" y="84" width="185" height="66" rx="3"></rect>
+        <rect x="265" y="84" width="3" height="66" fill="#9BAEB8"></rect>
+        <text class="n-title" x="283" y="112">parse + chunk</text>
+        <text class="n-sub"   x="283" y="132">1 block = 1 claim</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="490" y="84" width="185" height="66" rx="3"></rect>
+        <rect x="490" y="84" width="3" height="66" fill="#9BAEB8"></rect>
+        <text class="n-title" x="508" y="112">compose text</text>
+        <text class="n-sub"   x="508" y="132">company + tags + body</text>
+      </g>
+
+      <path class="n-flow" d="M225,117 L263,117" marker-end="url(#a1)"></path>
+      <path class="n-flow" d="M450,117 L488,117" marker-end="url(#a1)"></path>
+      <path d="M675,117 L734,117" stroke="#6FA6F5" stroke-width="1.5" fill="none" marker-end="url(#a1e)"></path>
+
+      <!-- data chip: composed text going out -->
+      <g>
+        <rect x="265" y="178" width="410" height="54" rx="3" fill="#1E272B" stroke="#232D31" stroke-dasharray="3 3"></rect>
+        <text class="n-edge" x="279" y="196">composed_text  →</text>
+        <text class="n-data" x="279" y="216">"Northwind Trading — Real-time trading dashboard …"</text>
+      </g>
+
+      <!-- data chip: vector coming back -->
+      <g>
+        <rect x="716" y="178" width="292" height="54" rx="3" fill="#1E272B" stroke="#6FA6F5" stroke-dasharray="3 3"></rect>
+        <text class="n-edge" x="730" y="196" fill="#6FA6F5">←  512 floats</text>
+        <text class="n-data" x="730" y="216">[0.021, −0.118, 0.334, 0.007, …]</text>
+      </g>
+
+      <!-- return path into Qdrant -->
+      <path d="M862,232 L862,282 L472,282 L472,318" stroke="#6FA6F5" stroke-width="1.5" fill="none" marker-end="url(#a1e)"></path>
+
+      <!-- Qdrant cylinder -->
+      <g>
+        <path d="M352,320 L352,382 a120,16 0 0 0 240,0 L592,320 z" fill="#1B2327" stroke="#2DD4BF" stroke-width="1.5"></path>
+        <ellipse cx="472" cy="320" rx="120" ry="16" fill="#1B2327" stroke="#2DD4BF" stroke-width="1.5"></ellipse>
+        <text class="n-title" x="472" y="350" text-anchor="middle">Qdrant · evidence_v1</text>
+        <text class="n-sub"   x="472" y="370" text-anchor="middle">512-dim · cosine · 6 points</text>
+      </g>
+
+      <!-- band 2 : hard facts -->
+      <text class="n-band" x="40" y="462">HARD FACTS  ·  WHAT IS SIMPLY TRUE</text>
+      <line x1="40" y1="472" x2="1000" y2="472" stroke="#232D31"></line>
+
+      <g>
+        <rect class="n-box" x="40" y="492" width="185" height="66" rx="3"></rect>
+        <rect x="40" y="492" width="3" height="66" fill="#F3A74B"></rect>
+        <text class="n-title" x="58" y="520">data/profile.json</text>
+        <text class="n-sub"   x="58" y="540">hand-maintained</text>
+      </g>
+
+      <g>
+        <rect class="n-box" x="265" y="492" width="185" height="66" rx="3"></rect>
+        <rect x="265" y="492" width="3" height="66" fill="#9BAEB8"></rect>
+        <text class="n-title" x="283" y="520">validate</text>
+        <text class="n-sub"   x="283" y="540">pydantic · strict</text>
+      </g>
+
+      <g>
+        <rect x="490" y="492" width="290" height="66" rx="3" fill="#1B2327" stroke="#F3A74B" stroke-width="1.5"></rect>
+        <rect x="490" y="492" width="3" height="66" fill="#F3A74B"></rect>
+        <text class="n-title" x="508" y="520">kept verbatim, on disk</text>
+        <text class="n-sub"   x="508" y="540">a table in Phase 3 — same contract</text>
+      </g>
+
+      <path class="n-flow" d="M225,525 L263,525" marker-end="url(#a1)"></path>
+      <path d="M450,525 L488,525" stroke="#F3A74B" stroke-width="1.5" fill="none" marker-end="url(#a1f)"></path>
+
+      <text class="n-edge" x="808" y="518" fill="#F3A74B">no embedding · no vector</text>
+      <text class="n-edge" x="808" y="536" fill="#F3A74B">read straight into the prompt</text>
+
+      <!-- facts sample chip -->
+      <g>
+        <rect x="490" y="574" width="290" height="34" rx="3" fill="#1E272B" stroke="#232D31" stroke-dasharray="3 3"></rect>
+        <text class="n-data" x="504" y="596">"degree": "B.Sc. Computer Science"</text>
+      </g>
+    </svg>
